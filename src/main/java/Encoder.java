@@ -1,9 +1,23 @@
+import javax.crypto.Cipher;
 import java.nio.ByteBuffer;
+import java.security.Key;
 
 public class Encoder {
 
-    public byte[] encode(Package pack){
-        int messageLength = pack.getMessage().getMessage().getBytes().length;
+    private final Key secretKey;
+
+    public Encoder(Key secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    public byte[] encode(Package pack) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+
+        byte[] origMessage = pack.getMessage().getMessage().getBytes();
+        byte[] encryptedMessage = cipher.doFinal(origMessage);
+
+        int messageLength = encryptedMessage.length;
 
         ByteBuffer bytes = ByteBuffer.allocate(1+1+8+4+2+4+4+messageLength+2);
         bytes.put((byte) 0x13);
@@ -15,9 +29,11 @@ public class Encoder {
 
         bytes.putInt(pack.getMessage().getcType());
         bytes.putInt(pack.getMessage().getbUserId());
-        bytes.put(pack.getMessage().getMessage().getBytes());
+
+        bytes.put(encryptedMessage);
+
         bytes.putShort(Crc16.calculateCrc(bytes.array(), 16, 4+4+messageLength));
+
         return bytes.array();
     }
-
 }

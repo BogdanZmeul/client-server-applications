@@ -1,11 +1,23 @@
+import javax.crypto.Cipher;
 import java.nio.ByteBuffer;
+import java.security.Key;
 
 public class Decoder {
-    public Package decode(byte[] data){
+
+    private final Key secretKey;
+
+    public Decoder(Key secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    public Package decode(byte[] data) throws Exception {
         Package pack = new Package();
 
         ByteBuffer bytes = ByteBuffer.wrap(data);
-        bytes.get();
+
+        if (bytes.get() != 0x13) {
+            throw new RuntimeException("Invalid bMagic byte");
+        }
 
         pack.setbSrc(bytes.get());
         pack.setbPktId(bytes.getLong());
@@ -17,9 +29,24 @@ public class Decoder {
             throw new RuntimeException("Header CRC16 error");
         }
 
-        pack.setMessage(new Message(bytes.getInt(), bytes.getInt(), new String(bytes.array(), 24, messageLength-4-4)));
+        int cType = bytes.getInt();
+        int bUserId = bytes.getInt();
 
-        //TODO: check CRC16
+        byte[] message = new byte[messageLength-4-4];
+        bytes.get(message);
+
+
+        short crc16Message = Crc16.calculateCrc(data, 16, messageLength);
+        if (crc16Message != bytes.getShort()) {
+            throw new RuntimeException("Message CRC16 error");
+        }
+
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        byte[] decryptedMessage = cipher.doFinal(message);
+
+        pack.setMessage(new Message(cType, bUserId, new String(decryptedMessage)));
+
         return pack;
     }
 }
