@@ -1,3 +1,5 @@
+package data;
+
 public class Package {
     private byte bSrc;
     private long bPktId;

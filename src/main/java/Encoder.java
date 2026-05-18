@@ -1,3 +1,6 @@
+import data.Package;
+import utils.Crc16;
+
 import javax.crypto.Cipher;
 import java.nio.ByteBuffer;
 import java.security.Key;
@@ -11,8 +14,14 @@ public class Encoder {
     }
 
     public byte[] encode(Package pack) throws Exception {
+        if (pack == null)
+            throw new NullPointerException("Package cannot be null");
+
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+
+        if (pack.getMessage() == null)
+            throw new NullPointerException("Message cannot be null");
 
         byte[] origMessage = pack.getMessage().getMessage().getBytes();
         byte[] encryptedMessage = cipher.doFinal(origMessage);

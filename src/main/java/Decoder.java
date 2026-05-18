@@ -1,3 +1,7 @@
+import data.Message;
+import data.Package;
+import utils.Crc16;
+
 import javax.crypto.Cipher;
 import java.nio.ByteBuffer;
 import java.security.Key;
@@ -10,8 +14,12 @@ public class Decoder {
         this.secretKey = secretKey;
     }
 
-    public Package decode(byte[] data) throws Exception {
-        Package pack = new Package();
+    public data.Package decode(byte[] data) throws Exception {
+        if(data == null || data.length < 26) {
+            throw new RuntimeException("Invalid data");
+        }
+
+        data.Package pack = new Package();
 
         ByteBuffer bytes = ByteBuffer.wrap(data);
 
@@ -34,7 +42,6 @@ public class Decoder {
 
         byte[] message = new byte[messageLength-4-4];
         bytes.get(message);
-
 
         short crc16Message = Crc16.calculateCrc(data, 16, messageLength);
         if (crc16Message != bytes.getShort()) {
