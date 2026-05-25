@@ -20,6 +20,7 @@ public class Encriptor implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("Encriptor started");
         try {
             while (true) {
                 Package pack = input.take();
@@ -35,6 +36,8 @@ public class Encriptor implements Runnable {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            System.out.println("Encriptor finished");
         }
     }
 

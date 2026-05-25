@@ -20,6 +20,7 @@ public class ProcessorWorker implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("Processor started");
         try {
             while (true) {
                 Package pack = input.take();
@@ -31,6 +32,8 @@ public class ProcessorWorker implements Runnable {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            System.out.println("Processor finished");
         }
     }
 }

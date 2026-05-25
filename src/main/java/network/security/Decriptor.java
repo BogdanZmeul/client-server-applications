@@ -21,6 +21,7 @@ public class Decriptor implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("Decriptor started");
         try {
             while (true) {
                 byte[] data = input.take();
@@ -32,6 +33,8 @@ public class Decriptor implements Runnable {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            System.out.println("Decriptor finished");
         }
     }
 
