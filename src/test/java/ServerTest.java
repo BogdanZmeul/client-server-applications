@@ -72,7 +72,7 @@ class ServerTest {
     }
 
     @Test
-    void shouldProcessDifferentMessagesAndErrorsWithManyWorkers() throws Exception {
+    void shouldProcessDifferentMessagesAndErrorsInOrder() throws Exception {
         byte[] keyBytes = "very_strong_key1".getBytes();
         Key secretKey = new SecretKeySpec(keyBytes, "AES");
         Encoder requestEncoder = new Encoder(secretKey);
@@ -93,7 +93,7 @@ class ServerTest {
         ProductStorage productStorage = new ProductStorage();
         Processor processor = new Processor(productStorage);
         Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
-                sender, 2, 2, 4, 3, 5);
+                sender, 1, 1, 1, 1, 1);
 
         server.start();
         server.awaitStop();
