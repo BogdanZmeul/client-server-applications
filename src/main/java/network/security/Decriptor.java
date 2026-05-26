@@ -42,7 +42,7 @@ public class Decriptor implements Runnable {
         try {
             output.put(decoder.decode(message));
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Decriptor error: " + e.getMessage());
         }
     }
 }

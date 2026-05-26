@@ -33,7 +33,7 @@ public class Receiver implements Runnable {
                 output.put(data);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Receiver error: " + e.getMessage());
         }
     }
 }

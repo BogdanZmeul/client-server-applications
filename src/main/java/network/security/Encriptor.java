@@ -31,7 +31,7 @@ public class Encriptor implements Runnable {
                 try {
                     output.put(encrypt(pack));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.out.println("Encriptor error: " + e.getMessage());
                 }
             }
         } catch (InterruptedException e) {

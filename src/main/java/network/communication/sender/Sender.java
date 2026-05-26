@@ -33,7 +33,7 @@ public class Sender implements Runnable {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Sender error: " + e.getMessage());
         } finally {
             System.out.println("Sender finished");
         }
