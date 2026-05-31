@@ -1,4 +1,4 @@
-package network.tcp;
+package network.tcp.communication;
 
 import network.protocol.NetworkReceiver;
 
