@@ -1,6 +1,9 @@
-package network.tcp.communication.context;
+package network.tcp.server;
 
 import network.storage.ProductStorage;
+import network.tcp.communication.TcpClientManager;
+import network.tcp.communication.TcpReceiverAdapter;
+import network.tcp.communication.TcpSenderAdapter;
 
 import java.net.Socket;
 import java.security.Key;
@@ -15,6 +18,9 @@ public class StoreServerContext {
     private final int processorsCount;
     private final int encriptorsCount;
     private final int sendersCount;
+    private final TcpClientManager clientManager = new TcpClientManager();
+    private final TcpSenderAdapter senderAdapter = new TcpSenderAdapter(clientManager);
+    private final TcpReceiverAdapter receiverAdapter = new TcpReceiverAdapter(clientManager, senderAdapter);
     private final BlockingQueue<Socket> clientSockets = new LinkedBlockingQueue<>();
     private final BlockingQueue<Thread> clientThreads = new LinkedBlockingQueue<>();
 
@@ -56,6 +62,14 @@ public class StoreServerContext {
 
     public int getSendersCount() {
         return sendersCount;
+    }
+
+    public TcpReceiverAdapter getReceiverAdapter() {
+        return receiverAdapter;
+    }
+
+    public TcpSenderAdapter getSenderAdapter() {
+        return senderAdapter;
     }
 
     public BlockingQueue<Socket> getClientSockets() {

@@ -1,7 +1,10 @@
 package network.tcp.server;
 
+import cipher.Decoder;
+import cipher.Encoder;
+import network.Server;
+import network.processor.Processor;
 import network.storage.ProductStorage;
-import network.tcp.communication.context.StoreServerContext;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -17,7 +20,8 @@ public class StoreServerTCP {
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     private ServerSocket serverSocket;
-    private StoreServerThread serverThread;
+    private TcpConnectionListener socketListener;
+    private Server server;
 
     public StoreServerTCP(int port, Key secretKey, ProductStorage productStorage,
                           int receiversCount, int decriptorsCount, int processorsCount,
@@ -33,13 +37,17 @@ public class StoreServerTCP {
         }
 
         isRunning.set(true);
+        server = createServer();
+        server.start();
+
         serverSocket = new ServerSocket(port);
-        serverThread = new StoreServerThread(serverSocket, isRunning, context);
-        serverThread.start();
+        socketListener = new TcpConnectionListener(serverSocket, isRunning, context);
+        socketListener.start();
     }
 
     public void stop() {
         isRunning.set(false);
+        stopServerNetwork();
         closeServerSocket();
 
         for (Socket socket : context.getClientSockets()) {
@@ -48,12 +56,33 @@ public class StoreServerTCP {
     }
 
     public void awaitStop() throws InterruptedException {
-        if (serverThread != null) {
-            serverThread.join();
+        if (socketListener != null) {
+            socketListener.join();
         }
 
         for (Thread thread : context.getClientThreads()) {
             thread.join();
+        }
+
+        if (server != null) {
+            server.awaitStop();
+        }
+    }
+
+    private Server createServer() {
+        Processor processor = new Processor(context.getProductStorage());
+        return new Server(context.getReceiverAdapter(), new Decoder(context.getSecretKey()), processor,
+                new Encoder(context.getSecretKey()), context.getSenderAdapter(),
+                context.getReceiversCount(), context.getDecriptorsCount(),
+                context.getProcessorsCount(), context.getEncriptorsCount(),
+                context.getSendersCount());
+    }
+
+    private void stopServerNetwork() {
+        try {
+            context.getReceiverAdapter().stop(context.getReceiversCount());
+        } catch (Exception e) {
+            System.out.println("TCP server network stop error: " + e.getMessage());
         }
     }
 

@@ -4,7 +4,6 @@ import cipher.Decoder;
 import cipher.Encoder;
 import data.Message;
 import data.Package;
-import network.tcp.communication.context.StoreClientContext;
 import network.tcp.server.StoreServerTCP;
 import utils.MessageType;
 

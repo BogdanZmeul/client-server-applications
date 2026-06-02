@@ -1,4 +1,4 @@
-package network.tcp.communication.context;
+package network.tcp.client;
 
 import cipher.Decoder;
 import cipher.Encoder;

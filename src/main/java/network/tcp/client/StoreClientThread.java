@@ -1,9 +1,8 @@
 package network.tcp.client;
 
 import data.Package;
-import network.tcp.communication.context.StoreClientContext;
-import network.tcp.communication.TcpNetworkReceiver;
-import network.tcp.communication.TcpNetworkSender;
+import network.tcp.communication.TcpSocketReceiver;
+import network.tcp.communication.TcpSocketSender;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -14,8 +13,8 @@ public class StoreClientThread extends Thread {
     private final StoreClientContext context;
 
     private Socket socket;
-    private TcpNetworkReceiver receiver;
-    private TcpNetworkSender sender;
+    private TcpSocketReceiver receiver;
+    private TcpSocketSender sender;
 
     public StoreClientThread(StoreClientContext context) {
         this.context = context;
@@ -60,8 +59,8 @@ public class StoreClientThread extends Thread {
     private boolean tryConnect() {
         try {
             socket = new Socket(context.getAddress(), context.getPort());
-            receiver = new TcpNetworkReceiver(socket.getInputStream());
-            sender = new TcpNetworkSender(socket.getOutputStream());
+            receiver = new TcpSocketReceiver(socket.getInputStream());
+            sender = new TcpSocketSender(socket.getOutputStream());
             context.getIsConnected().set(true);
             System.out.println("Connected to server: " + socket);
             return true;
