@@ -13,7 +13,7 @@ import java.security.Key;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StoreServerTCP {
-    public static final int PORT = 8080;
+    public static final int PORT = 9000;
 
     private final int port;
     private final StoreServerContext context;

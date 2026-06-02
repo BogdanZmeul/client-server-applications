@@ -15,7 +15,7 @@ import java.security.Key;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StoreServerUDP {
-    public static final int PORT = 8081;
+    public static final int PORT = 9001;
 
     private final int port;
     private final Key secretKey;

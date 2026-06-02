@@ -9,10 +9,10 @@ class UdpClientManagerTest {
     @Test
     void shouldSaveAndRemoveClientAddress() {
         UdpClientManager manager = new UdpClientManager();
-        InetSocketAddress client = new InetSocketAddress("localhost", 8081);
+        InetSocketAddress client = new InetSocketAddress("localhost", 9001);
 
         assertTrue(manager.addClient("1:10", client));
-        assertFalse(manager.addClient("1:10", new InetSocketAddress("localhost", 8082)));
+        assertFalse(manager.addClient("1:10", new InetSocketAddress("localhost", 9002)));
         assertEquals(client, manager.removeClient("1:10"));
         assertNull(manager.removeClient("1:10"));
     }
