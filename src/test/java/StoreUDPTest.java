@@ -110,7 +110,7 @@ class StoreUDPTest {
         Key secretKey = createKey();
         ProductStorage productStorage = new ProductStorage();
         StoreServerUDP server = new StoreServerUDP(PORT, secretKey, productStorage);
-        int clientsCount = 10;
+        int clientsCount = 100;
         int messagesCount = 10;
         Thread[] threads = new Thread[clientsCount];
         Exception[] errors = new Exception[clientsCount];
