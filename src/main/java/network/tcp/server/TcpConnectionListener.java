@@ -1,19 +1,17 @@
 package network.tcp.server;
 
-import network.tcp.communication.context.StoreServerContext;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class StoreServerThread extends Thread {
+public class TcpConnectionListener extends Thread {
     private final ServerSocket serverSocket;
     private final AtomicBoolean isRunning;
     private final StoreServerContext context;
 
-    public StoreServerThread(ServerSocket serverSocket, AtomicBoolean isRunning,
-                             StoreServerContext context) {
+    public TcpConnectionListener(ServerSocket serverSocket, AtomicBoolean isRunning,
+                                 StoreServerContext context) {
         this.serverSocket = serverSocket;
         this.isRunning = isRunning;
         this.context = context;
@@ -25,7 +23,7 @@ public class StoreServerThread extends Thread {
         try {
             while (isRunning.get()) {
                 Socket socket = serverSocket.accept();
-                StoreClientConnection clientConnection = createClientConnection(socket);
+                TcpClientConnection clientConnection = createClientConnection(socket);
 
                 context.getClientSockets().add(socket);
                 context.getClientThreads().add(clientConnection);
@@ -42,8 +40,8 @@ public class StoreServerThread extends Thread {
         }
     }
 
-    private StoreClientConnection createClientConnection(Socket socket) {
-        return new StoreClientConnection(socket, context);
+    private TcpClientConnection createClientConnection(Socket socket) {
+        return new TcpClientConnection(socket, context);
     }
 
     private void closeServerSocket() {

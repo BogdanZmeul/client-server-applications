@@ -8,14 +8,14 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TcpNetworkReceiver implements NetworkReceiver {
+public class TcpSocketReceiver implements NetworkReceiver {
     private static final int HEADER_LENGTH = 16;
     private static final int MESSAGE_CRC_LENGTH = 2;
 
     private final DataInputStream input;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    public TcpNetworkReceiver(InputStream input) {
+    public TcpSocketReceiver(InputStream input) {
         this.input = new DataInputStream(input);
     }
 

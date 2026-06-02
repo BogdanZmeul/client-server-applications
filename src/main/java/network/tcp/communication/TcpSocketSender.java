@@ -6,11 +6,11 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TcpNetworkSender implements NetworkSender {
+public class TcpSocketSender implements NetworkSender {
     private final OutputStream output;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    public TcpNetworkSender(OutputStream output) {
+    public TcpSocketSender(OutputStream output) {
         this.output = output;
     }
 
