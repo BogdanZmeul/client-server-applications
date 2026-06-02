@@ -32,7 +32,7 @@ public class Server {
     private final int receiversCount;
     private final int decriptorsCount;
     private final int processorsCount;
-    private final int encodersCount;
+    private final int encriptorsCount;
     private final int sendersCount;
 
     private final ExecutorService receiverExecutor;
@@ -49,20 +49,20 @@ public class Server {
     public Server(NetworkReceiver networkReceiver, Decoder decoder, Processor processor,
                   Encoder encoder, NetworkSender networkSender,
                   int receiversCount, int decriptorsCount, int processorsCount,
-                  int encodersCount, int sendersCount) {
+                  int encriptorsCount, int sendersCount) {
         this(networkReceiver, decoder, processor, encoder, networkSender,
                 InetAddress.getLoopbackAddress(), receiversCount, decriptorsCount,
-                processorsCount, encodersCount, sendersCount);
+                processorsCount, encriptorsCount, sendersCount);
     }
 
     public Server(NetworkReceiver networkReceiver, Decoder decoder, Processor processor,
                   Encoder encoder, NetworkSender networkSender, InetAddress target,
                   int receiversCount, int decriptorsCount, int processorsCount,
-                  int encodersCount, int sendersCount) {
+                  int encriptorsCount, int sendersCount) {
         checkCount(receiversCount, "Receivers count");
         checkCount(decriptorsCount, "Decriptors count");
         checkCount(processorsCount, "Processors count");
-        checkCount(encodersCount, "Encoders count");
+        checkCount(encriptorsCount, "Encoders count");
         checkCount(sendersCount, "Senders count");
 
         this.networkReceiver = networkReceiver;
@@ -74,12 +74,12 @@ public class Server {
         this.receiversCount = receiversCount;
         this.decriptorsCount = decriptorsCount;
         this.processorsCount = processorsCount;
-        this.encodersCount = encodersCount;
+        this.encriptorsCount = encriptorsCount;
         this.sendersCount = sendersCount;
         this.receiverExecutor = Executors.newFixedThreadPool(receiversCount);
         this.decriptorExecutor = Executors.newFixedThreadPool(decriptorsCount);
         this.processorExecutor = Executors.newFixedThreadPool(processorsCount);
-        this.encriptorExecutor = Executors.newFixedThreadPool(encodersCount);
+        this.encriptorExecutor = Executors.newFixedThreadPool(encriptorsCount);
         this.senderExecutor = Executors.newFixedThreadPool(sendersCount);
     }
 
@@ -96,7 +96,7 @@ public class Server {
             processorExecutor.submit(new ProcessorWorker(processor, decodedQueue, processedQueue, END_PACKAGE));
         }
 
-        for (int i = 0; i < encodersCount; i++) {
+        for (int i = 0; i < encriptorsCount; i++) {
             encriptorExecutor.submit(new Encriptor(encoder, processedQueue, encodedQueue, END_PACKAGE));
         }
 
@@ -116,7 +116,7 @@ public class Server {
 
         processorExecutor.shutdown();
         waitExecutor(processorExecutor);
-        addEndPackages(processedQueue, encodersCount);
+        addEndPackages(processedQueue, encriptorsCount);
 
         encriptorExecutor.shutdown();
         waitExecutor(encriptorExecutor);
