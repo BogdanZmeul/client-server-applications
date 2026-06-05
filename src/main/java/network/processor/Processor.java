@@ -2,14 +2,14 @@ package network.processor;
 
 import data.Message;
 import data.Package;
-import network.storage.ProductStorage;
+import db.ProductService;
 import utils.MessageType;
 
 public class Processor {
-    private final ProductStorage productStorage;
+    private final ProductService productService;
 
-    public Processor(ProductStorage productStorage) {
-        this.productStorage = productStorage;
+    public Processor(ProductService productService) {
+        this.productService = productService;
     }
 
     public Package process(Package pack) {
@@ -53,40 +53,40 @@ public class Processor {
 
     private String getProductCount(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        return "Ok:" + productStorage.getProductCount(args[0]);
+        return "Ok:" + productService.getProductCount(args[0]);
     }
 
     private String takeProduct(Message message) {
         String[] args = getArgs(message.getMessage(), 2);
-        productStorage.takeProduct(args[0], Integer.parseInt(args[1]));
+        productService.takeProduct(args[0], Integer.parseInt(args[1]));
 
         return "Ok";
     }
 
     private String addProduct(Message message) {
         String[] args = getArgs(message.getMessage(), 2);
-        productStorage.addProduct(args[0], Integer.parseInt(args[1]));
+        productService.addProduct(args[0], Integer.parseInt(args[1]));
 
         return "Ok";
     }
 
     private String addGroup(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        productStorage.addGroup(args[0]);
+        productService.addGroup(args[0]);
 
         return "Ok";
     }
 
     private String addProductToGroup(Message message) {
         String[] args = getArgs(message.getMessage(), 2);
-        productStorage.addProductToGroup(args[0], args[1]);
+        productService.addProductToGroup(args[0], args[1]);
 
         return "Ok";
     }
 
     private String setPrice(Message message) {
         String[] args = getArgs(message.getMessage(), 2);
-        productStorage.setPrice(args[0], Double.parseDouble(args[1]));
+        productService.setPrice(args[0], Double.parseDouble(args[1]));
 
         return "Ok";
     }
