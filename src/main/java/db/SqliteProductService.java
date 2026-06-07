@@ -72,7 +72,6 @@ public class SqliteProductService implements ProductService, AutoCloseable {
 
     @Override
     public synchronized int deleteAll() {
-        groupTable.deleteAllProductLinks();
         return productTable.deleteAll();
     }
 
@@ -168,15 +167,6 @@ public class SqliteProductService implements ProductService, AutoCloseable {
     private void init() {
         try (Statement statement = connection.createStatement()) {
             statement.execute("""
-                    CREATE TABLE IF NOT EXISTS product (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name VARCHAR(100) NOT NULL UNIQUE,
-                        count INT NOT NULL,
-                        price REAL NOT NULL
-                    )
-                    """);
-
-            statement.execute("""
                     CREATE TABLE IF NOT EXISTS product_group (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         name VARCHAR(100) NOT NULL UNIQUE
@@ -184,12 +174,13 @@ public class SqliteProductService implements ProductService, AutoCloseable {
                     """);
 
             statement.execute("""
-                    CREATE TABLE IF NOT EXISTS product_group_item (
-                        group_id INT NOT NULL,
-                        product_id INT NOT NULL,
-                        PRIMARY KEY(group_id, product_id),
-                        FOREIGN KEY(group_id) REFERENCES product_group(id) ON DELETE CASCADE,
-                        FOREIGN KEY(product_id) REFERENCES product(id) ON DELETE CASCADE
+                    CREATE TABLE IF NOT EXISTS product (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name VARCHAR(100) NOT NULL UNIQUE,
+                        count INT NOT NULL,
+                        price REAL NOT NULL,
+                        group_id INT,
+                        FOREIGN KEY(group_id) REFERENCES product_group(id) ON DELETE SET NULL
                     )
                     """);
         } catch (SQLException e) {

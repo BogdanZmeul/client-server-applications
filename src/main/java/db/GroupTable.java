@@ -24,7 +24,7 @@ class GroupTable {
 
     void addProductToGroup(int groupId, int productId) {
         try (PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO product_group_item(group_id, product_id) VALUES (?, ?)")) {
+                "UPDATE product SET group_id = ? WHERE id = ?")) {
             ps.setInt(1, groupId);
             ps.setInt(2, productId);
             ps.executeUpdate();
@@ -52,9 +52,8 @@ class GroupTable {
     boolean isProductInGroup(String group, String product) {
         try (PreparedStatement ps = connection.prepareStatement("""
                 SELECT COUNT(*)
-                FROM product_group_item pgi
-                JOIN product_group pg ON pg.id = pgi.group_id
-                JOIN product p ON p.id = pgi.product_id
+                FROM product p
+                JOIN product_group pg ON pg.id = p.group_id
                 WHERE pg.name = ? AND p.name = ?
                 """)) {
             ps.setString(1, group);
@@ -69,14 +68,6 @@ class GroupTable {
             return false;
         } catch (SQLException e) {
             throw new RuntimeException("Can't check product group", e);
-        }
-    }
-
-    void deleteAllProductLinks() {
-        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product_group_item")) {
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Can't delete product groups", e);
         }
     }
 
