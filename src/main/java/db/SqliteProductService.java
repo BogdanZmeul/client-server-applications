@@ -26,47 +26,47 @@ public class SqliteProductService implements ProductService, AutoCloseable {
     }
 
     @Override
-    public synchronized int create(Product product) {
+    public int create(Product product) {
         return productTable.create(product);
     }
 
     @Override
-    public synchronized int count() {
+    public int count() {
         return productTable.count();
     }
 
     @Override
-    public synchronized List<Product> readAll() {
+    public List<Product> readAll() {
         return productTable.readAll();
     }
 
     @Override
-    public synchronized Optional<Product> read(int id) {
+    public Optional<Product> read(int id) {
         return productTable.read(id);
     }
 
     @Override
-    public synchronized Optional<Product> readByName(String name) {
+    public Optional<Product> readByName(String name) {
         return productTable.readByName(name);
     }
 
     @Override
-    public synchronized int update(Product product) {
+    public int update(Product product) {
         return productTable.update(product);
     }
 
     @Override
-    public synchronized int delete(int id) {
+    public int delete(int id) {
         return productTable.delete(id);
     }
 
     @Override
-    public synchronized int deleteAll() {
+    public int deleteAll() {
         return productTable.deleteAll();
     }
 
     @Override
-    public synchronized int getProductCount(String product) {
+    public int getProductCount(String product) {
         Optional<Product> found = readByName(product);
         if (found.isEmpty()) {
             return 0;
@@ -76,74 +76,74 @@ public class SqliteProductService implements ProductService, AutoCloseable {
     }
 
     @Override
-    public synchronized void takeProduct(String product, int count) {
+    public void takeProduct(String product, int count) {
         productTable.takeCount(product, count);
     }
 
     @Override
-    public synchronized void addProduct(String product, int count) {
+    public void addProduct(String product, int count) {
         productTable.addCount(product, count);
     }
 
     @Override
-    public synchronized int createGroup(ProductGroup group) {
+    public int createGroup(ProductGroup group) {
         return groupTable.create(group);
     }
 
     @Override
-    public synchronized int groupsCount() {
+    public int groupsCount() {
         return groupTable.count();
     }
 
     @Override
-    public synchronized List<ProductGroup> readAllGroups() {
+    public List<ProductGroup> readAllGroups() {
         return groupTable.readAll();
     }
 
     @Override
-    public synchronized Optional<ProductGroup> readGroup(int id) {
+    public Optional<ProductGroup> readGroup(int id) {
         return groupTable.read(id);
     }
 
     @Override
-    public synchronized Optional<ProductGroup> readGroupByName(String name) {
+    public Optional<ProductGroup> readGroupByName(String name) {
         return groupTable.readByName(name);
     }
 
     @Override
-    public synchronized int updateGroup(ProductGroup group) {
+    public int updateGroup(ProductGroup group) {
         return groupTable.update(group);
     }
 
     @Override
-    public synchronized void addGroup(String group) {
+    public void addGroup(String group) {
         groupTable.create(new ProductGroup(group));
     }
 
     @Override
-    public synchronized int deleteGroup(int id) {
+    public int deleteGroup(int id) {
         return groupTable.delete(id);
     }
 
     @Override
-    public synchronized int deleteGroup(String group) {
+    public int deleteGroup(String group) {
         return groupTable.delete(group);
     }
 
     @Override
-    public synchronized void addProductToGroup(String group, String product) {
+    public void addProductToGroup(String group, String product) {
         int groupId = groupTable.getId(group);
         int productId = productTable.getId(product);
         groupTable.addProductToGroup(groupId, productId);
     }
 
     @Override
-    public synchronized void setPrice(String product, double price) {
+    public void setPrice(String product, double price) {
         productTable.updatePrice(product, price);
     }
 
     @Override
-    public synchronized double getPrice(String product) {
+    public double getPrice(String product) {
         Optional<Product> found = readByName(product);
         if (found.isEmpty()) {
             return 0;
@@ -153,22 +153,22 @@ public class SqliteProductService implements ProductService, AutoCloseable {
     }
 
     @Override
-    public synchronized boolean isGroupExists(String group) {
+    public boolean isGroupExists(String group) {
         return groupTable.exists(group);
     }
 
     @Override
-    public synchronized boolean hasProductsInGroup(String group) {
+    public boolean hasProductsInGroup(String group) {
         return groupTable.hasProducts(group);
     }
 
     @Override
-    public synchronized boolean isProductInGroup(String group, String product) {
+    public boolean isProductInGroup(String group, String product) {
         return groupTable.isProductInGroup(group, product);
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         try {
             connection.close();
         } catch (SQLException e) {
