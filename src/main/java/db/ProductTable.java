@@ -134,13 +134,23 @@ class ProductTable {
         }
     }
 
-    void updateCount(String product, int count) {
-        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = ? WHERE name = ?")) {
+    void addCount(String product, int count) {
+        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count + ? WHERE name = ?")) {
             ps.setInt(1, count);
             ps.setString(2, product);
             ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Can't update product count: " + product, e);
+            throw new RuntimeException("Can't add product count: " + product, e);
+        }
+    }
+
+    void takeCount(String product, int count) {
+        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count - ? WHERE name = ?")) {
+            ps.setInt(1, count);
+            ps.setString(2, product);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't take product count: " + product, e);
         }
     }
 

@@ -26,7 +26,23 @@ public interface ProductService {
 
     void addProduct(String product, int count);
 
+    int createGroup(ProductGroup group);
+
+    int groupsCount();
+
+    List<ProductGroup> readAllGroups();
+
+    Optional<ProductGroup> readGroup(int id);
+
+    Optional<ProductGroup> readGroupByName(String name);
+
+    int updateGroup(ProductGroup group);
+
     void addGroup(String group);
+
+    int deleteGroup(int id);
+
+    int deleteGroup(String group);
 
     void addProductToGroup(String group, String product);
 
@@ -35,6 +51,8 @@ public interface ProductService {
     double getPrice(String product);
 
     boolean isGroupExists(String group);
+
+    boolean hasProductsInGroup(String group);
 
     boolean isProductInGroup(String group, String product);
 }

@@ -27,9 +27,6 @@ public class SqliteProductService implements ProductService, AutoCloseable {
 
     @Override
     public synchronized int create(Product product) {
-        checkCount(product.getCount());
-        checkPrice(product.getPrice());
-
         return productTable.create(product);
     }
 
@@ -55,13 +52,6 @@ public class SqliteProductService implements ProductService, AutoCloseable {
 
     @Override
     public synchronized int update(Product product) {
-        checkCount(product.getCount());
-        checkPrice(product.getPrice());
-
-        if (product.getId() == null) {
-            throw new RuntimeException("Product id cannot be null");
-        }
-
         return productTable.update(product);
     }
 
@@ -87,33 +77,57 @@ public class SqliteProductService implements ProductService, AutoCloseable {
 
     @Override
     public synchronized void takeProduct(String product, int count) {
-        checkCount(count);
-
-        Optional<Product> found = readByName(product);
-        int oldCount = found.map(Product::getCount).orElse(0);
-        if (oldCount < count) {
-            throw new RuntimeException("Not enough product");
-        }
-
-        productTable.updateCount(product, oldCount - count);
+        productTable.takeCount(product, count);
     }
 
     @Override
     public synchronized void addProduct(String product, int count) {
-        checkCount(count);
+        productTable.addCount(product, count);
+    }
 
-        Optional<Product> found = readByName(product);
-        if (found.isEmpty()) {
-            productTable.create(new Product(product, count, 0));
-            return;
-        }
+    @Override
+    public synchronized int createGroup(ProductGroup group) {
+        return groupTable.create(group);
+    }
 
-        productTable.updateCount(product, found.get().getCount() + count);
+    @Override
+    public synchronized int groupsCount() {
+        return groupTable.count();
+    }
+
+    @Override
+    public synchronized List<ProductGroup> readAllGroups() {
+        return groupTable.readAll();
+    }
+
+    @Override
+    public synchronized Optional<ProductGroup> readGroup(int id) {
+        return groupTable.read(id);
+    }
+
+    @Override
+    public synchronized Optional<ProductGroup> readGroupByName(String name) {
+        return groupTable.readByName(name);
+    }
+
+    @Override
+    public synchronized int updateGroup(ProductGroup group) {
+        return groupTable.update(group);
     }
 
     @Override
     public synchronized void addGroup(String group) {
-        groupTable.add(group);
+        groupTable.create(new ProductGroup(group));
+    }
+
+    @Override
+    public synchronized int deleteGroup(int id) {
+        return groupTable.delete(id);
+    }
+
+    @Override
+    public synchronized int deleteGroup(String group) {
+        return groupTable.delete(group);
     }
 
     @Override
@@ -125,13 +139,6 @@ public class SqliteProductService implements ProductService, AutoCloseable {
 
     @Override
     public synchronized void setPrice(String product, double price) {
-        checkPrice(price);
-
-        if (readByName(product).isEmpty()) {
-            productTable.create(new Product(product, 0, price));
-            return;
-        }
-
         productTable.updatePrice(product, price);
     }
 
@@ -148,6 +155,11 @@ public class SqliteProductService implements ProductService, AutoCloseable {
     @Override
     public synchronized boolean isGroupExists(String group) {
         return groupTable.exists(group);
+    }
+
+    @Override
+    public synchronized boolean hasProductsInGroup(String group) {
+        return groupTable.hasProducts(group);
     }
 
     @Override
@@ -180,7 +192,7 @@ public class SqliteProductService implements ProductService, AutoCloseable {
                         count INT NOT NULL,
                         price REAL NOT NULL,
                         group_id INT,
-                        FOREIGN KEY(group_id) REFERENCES product_group(id) ON DELETE SET NULL
+                        FOREIGN KEY(group_id) REFERENCES product_group(id) ON DELETE RESTRICT
                     )
                     """);
         } catch (SQLException e) {
@@ -188,15 +200,4 @@ public class SqliteProductService implements ProductService, AutoCloseable {
         }
     }
 
-    private void checkCount(int count) {
-        if (count < 0) {
-            throw new RuntimeException("Count cannot be negative");
-        }
-    }
-
-    private void checkPrice(double price) {
-        if (price < 0) {
-            throw new RuntimeException("Price cannot be negative");
-        }
-    }
 }
