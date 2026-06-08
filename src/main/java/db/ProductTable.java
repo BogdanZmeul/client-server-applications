@@ -16,7 +16,7 @@ class ProductTable {
         this.connection = connection;
     }
 
-    int create(Product product) {
+    int createProduct(Product product) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "INSERT INTO product(name, count, price) VALUES (?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS)) {
@@ -41,7 +41,7 @@ class ProductTable {
         }
     }
 
-    int count() {
+    int getProductsCount() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM product")) {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -55,7 +55,7 @@ class ProductTable {
         }
     }
 
-    List<Product> readAll() {
+    List<Product> getAllProducts() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product")) {
             List<Product> products = new ArrayList<>();
 
@@ -71,7 +71,7 @@ class ProductTable {
         }
     }
 
-    Optional<Product> read(int id) {
+    Optional<Product> getProduct(int id) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product WHERE id = ?")) {
             ps.setInt(1, id);
 
@@ -87,7 +87,7 @@ class ProductTable {
         }
     }
 
-    Optional<Product> readByName(String name) {
+    Optional<Product> getProduct(String name) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product WHERE name = ?")) {
             ps.setString(1, name);
 
@@ -103,7 +103,7 @@ class ProductTable {
         }
     }
 
-    int update(Product product) {
+    void updateProduct(Product product) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "UPDATE product SET name = ?, count = ?, price = ? WHERE id = ?")) {
             ps.setString(1, product.getName());
@@ -111,22 +111,22 @@ class ProductTable {
             ps.setDouble(3, product.getPrice());
             ps.setInt(4, product.getId());
 
-            return ps.executeUpdate();
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Can't update product: " + product, e);
         }
     }
 
-    int delete(int id) {
+    void deleteProduct(int id) {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product WHERE id = ?")) {
             ps.setInt(1, id);
-            return ps.executeUpdate();
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Can't delete product by id: " + id, e);
         }
     }
 
-    int deleteAll() {
+    int deleteAllProducts() {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product")) {
             return ps.executeUpdate();
         } catch (SQLException e) {
@@ -134,49 +134,65 @@ class ProductTable {
         }
     }
 
-    void addCount(String product, int count) {
-        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count + ? WHERE name = ?")) {
-            ps.setInt(1, count);
-            ps.setString(2, product);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Can't add product count: " + product, e);
-        }
-    }
-
-    void takeCount(String product, int count) {
-        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count - ? WHERE name = ?")) {
-            ps.setInt(1, count);
-            ps.setString(2, product);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Can't take product count: " + product, e);
-        }
-    }
-
-    void updatePrice(String product, double price) {
-        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET price = ? WHERE name = ?")) {
-            ps.setDouble(1, price);
-            ps.setString(2, product);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Can't set price for product: " + product, e);
-        }
-    }
-
-    int getId(String product) {
-        try (PreparedStatement ps = connection.prepareStatement("SELECT id FROM product WHERE name = ?")) {
-            ps.setString(1, product);
+    int getProductQuantity(int productId) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT count FROM product WHERE id = ?")) {
+            ps.setInt(1, productId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt("id");
+                    return rs.getInt("count");
                 }
             }
 
-            throw new RuntimeException("Product not found");
+            return 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't get product id: " + product, e);
+            throw new RuntimeException("Can't get product count by id: " + productId, e);
+        }
+    }
+
+    void addProductQuantity(int productId, int count) {
+        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count + ? WHERE id = ?")) {
+            ps.setInt(1, count);
+            ps.setInt(2, productId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't add product count: " + productId, e);
+        }
+    }
+
+    void takeProductQuantity(int productId, int count) {
+        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count - ? WHERE id = ?")) {
+            ps.setInt(1, count);
+            ps.setInt(2, productId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't take product count: " + productId, e);
+        }
+    }
+
+    void setProductPrice(int productId, double price) {
+        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET price = ? WHERE id = ?")) {
+            ps.setDouble(1, price);
+            ps.setInt(2, productId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't set price for product: " + productId, e);
+        }
+    }
+
+    double getProductPrice(int productId) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT price FROM product WHERE id = ?")) {
+            ps.setInt(1, productId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("price");
+                }
+            }
+
+            return 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't get product price by id: " + productId, e);
         }
     }
 

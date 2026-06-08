@@ -16,7 +16,7 @@ class GroupTable {
         this.connection = connection;
     }
 
-    int create(ProductGroup group) {
+    int createGroup(ProductGroup group) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "INSERT INTO product_group(name) VALUES (?)",
                 Statement.RETURN_GENERATED_KEYS)) {
@@ -39,7 +39,7 @@ class GroupTable {
         }
     }
 
-    int count() {
+    int getGroupsCount() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM product_group")) {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -53,7 +53,7 @@ class GroupTable {
         }
     }
 
-    List<ProductGroup> readAll() {
+    List<ProductGroup> getAllGroups() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product_group")) {
             List<ProductGroup> groups = new ArrayList<>();
 
@@ -69,7 +69,7 @@ class GroupTable {
         }
     }
 
-    Optional<ProductGroup> read(int id) {
+    Optional<ProductGroup> getGroup(int id) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product_group WHERE id = ?")) {
             ps.setInt(1, id);
 
@@ -85,7 +85,7 @@ class GroupTable {
         }
     }
 
-    Optional<ProductGroup> readByName(String name) {
+    Optional<ProductGroup> getGroup(String name) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product_group WHERE name = ?")) {
             ps.setString(1, name);
 
@@ -101,32 +101,23 @@ class GroupTable {
         }
     }
 
-    int update(ProductGroup group) {
+    void updateGroup(ProductGroup group) {
         try (PreparedStatement ps = connection.prepareStatement("UPDATE product_group SET name = ? WHERE id = ?")) {
             ps.setString(1, group.getName());
             ps.setInt(2, group.getId());
 
-            return ps.executeUpdate();
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Can't update group: " + group, e);
         }
     }
 
-    int delete(int id) {
+    void deleteGroup(int id) {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product_group WHERE id = ?")) {
             ps.setInt(1, id);
-            return ps.executeUpdate();
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Can't delete group by id: " + id, e);
-        }
-    }
-
-    int delete(String group) {
-        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product_group WHERE name = ?")) {
-            ps.setString(1, group);
-            return ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Can't delete group: " + group, e);
         }
     }
 
@@ -141,14 +132,13 @@ class GroupTable {
         }
     }
 
-    boolean hasProducts(String group) {
+    boolean hasProductsInGroup(int groupId) {
         try (PreparedStatement ps = connection.prepareStatement("""
                 SELECT COUNT(*)
-                FROM product p
-                JOIN product_group pg ON pg.id = p.group_id
-                WHERE pg.name = ?
+                FROM product
+                WHERE group_id = ?
                 """)) {
-            ps.setString(1, group);
+            ps.setInt(1, groupId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -158,35 +148,18 @@ class GroupTable {
 
             return false;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't check group products: " + group, e);
+            throw new RuntimeException("Can't check group products: " + groupId, e);
         }
     }
 
-    boolean exists(String group) {
-        try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM product_group WHERE name = ?")) {
-            ps.setString(1, group);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-
-            return false;
-        } catch (SQLException e) {
-            throw new RuntimeException("Can't check group: " + group, e);
-        }
-    }
-
-    boolean isProductInGroup(String group, String product) {
+    boolean isProductInGroup(int groupId, int productId) {
         try (PreparedStatement ps = connection.prepareStatement("""
                 SELECT COUNT(*)
-                FROM product p
-                JOIN product_group pg ON pg.id = p.group_id
-                WHERE pg.name = ? AND p.name = ?
+                FROM product
+                WHERE group_id = ? AND id = ?
                 """)) {
-            ps.setString(1, group);
-            ps.setString(2, product);
+            ps.setInt(1, groupId);
+            ps.setInt(2, productId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -197,22 +170,6 @@ class GroupTable {
             return false;
         } catch (SQLException e) {
             throw new RuntimeException("Can't check product group", e);
-        }
-    }
-
-    int getId(String group) {
-        try (PreparedStatement ps = connection.prepareStatement("SELECT id FROM product_group WHERE name = ?")) {
-            ps.setString(1, group);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("id");
-                }
-            }
-
-            throw new RuntimeException("Group not found");
-        } catch (SQLException e) {
-            throw new RuntimeException("Can't get group id: " + group, e);
         }
     }
 

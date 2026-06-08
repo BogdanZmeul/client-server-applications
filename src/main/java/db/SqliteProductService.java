@@ -7,7 +7,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
-public class SqliteProductService implements ProductService, AutoCloseable {
+public class SqliteProductService implements ProductDatabase, AutoCloseable {
     private final Connection connection;
     private final ProductTable productTable;
     private final GroupTable groupTable;
@@ -15,7 +15,6 @@ public class SqliteProductService implements ProductService, AutoCloseable {
     public SqliteProductService(String dbName) {
         try {
             this.connection = DriverManager.getConnection("jdbc:sqlite:" + dbName);
-            this.connection.createStatement().execute("PRAGMA foreign_keys = ON");
         } catch (SQLException e) {
             throw new RuntimeException("Can't create SQLite DB", e);
         }
@@ -26,145 +25,118 @@ public class SqliteProductService implements ProductService, AutoCloseable {
     }
 
     @Override
-    public int create(Product product) {
-        return productTable.create(product);
+    public int createProduct(Product product) {
+        return productTable.createProduct(product);
     }
 
     @Override
-    public int count() {
-        return productTable.count();
+    public int getProductsCount() {
+        return productTable.getProductsCount();
     }
 
     @Override
-    public List<Product> readAll() {
-        return productTable.readAll();
+    public List<Product> getAllProducts() {
+        return productTable.getAllProducts();
     }
 
     @Override
-    public Optional<Product> read(int id) {
-        return productTable.read(id);
+    public Optional<Product> getProduct(int id) {
+        return productTable.getProduct(id);
     }
 
     @Override
-    public Optional<Product> readByName(String name) {
-        return productTable.readByName(name);
+    public Optional<Product> getProduct(String name) {
+        return productTable.getProduct(name);
     }
 
     @Override
-    public int update(Product product) {
-        return productTable.update(product);
+    public void updateProduct(Product product) {
+        productTable.updateProduct(product);
     }
 
     @Override
-    public int delete(int id) {
-        return productTable.delete(id);
+    public void deleteProduct(int id) {
+        productTable.deleteProduct(id);
     }
 
     @Override
-    public int deleteAll() {
-        return productTable.deleteAll();
+    public int deleteAllProducts() {
+        return productTable.deleteAllProducts();
     }
 
     @Override
-    public int getProductCount(String product) {
-        Optional<Product> found = readByName(product);
-        if (found.isEmpty()) {
-            return 0;
-        }
-
-        return found.get().getCount();
+    public int getProductQuantity(int productId) {
+        return productTable.getProductQuantity(productId);
     }
 
     @Override
-    public void takeProduct(String product, int count) {
-        productTable.takeCount(product, count);
+    public void takeProductQuantity(int productId, int count) {
+        productTable.takeProductQuantity(productId, count);
     }
 
     @Override
-    public void addProduct(String product, int count) {
-        productTable.addCount(product, count);
+    public void addProductQuantity(int productId, int count) {
+        productTable.addProductQuantity(productId, count);
+    }
+
+    @Override
+    public void setProductPrice(int productId, double price) {
+        productTable.setProductPrice(productId, price);
+    }
+
+    @Override
+    public double getProductPrice(int productId) {
+        return productTable.getProductPrice(productId);
     }
 
     @Override
     public int createGroup(ProductGroup group) {
-        return groupTable.create(group);
+        return groupTable.createGroup(group);
     }
 
     @Override
-    public int groupsCount() {
-        return groupTable.count();
+    public int getGroupsCount() {
+        return groupTable.getGroupsCount();
     }
 
     @Override
-    public List<ProductGroup> readAllGroups() {
-        return groupTable.readAll();
+    public List<ProductGroup> getAllGroups() {
+        return groupTable.getAllGroups();
     }
 
     @Override
-    public Optional<ProductGroup> readGroup(int id) {
-        return groupTable.read(id);
+    public Optional<ProductGroup> getGroup(int id) {
+        return groupTable.getGroup(id);
     }
 
     @Override
-    public Optional<ProductGroup> readGroupByName(String name) {
-        return groupTable.readByName(name);
+    public Optional<ProductGroup> getGroup(String name) {
+        return groupTable.getGroup(name);
     }
 
     @Override
-    public int updateGroup(ProductGroup group) {
-        return groupTable.update(group);
+    public void updateGroup(ProductGroup group) {
+        groupTable.updateGroup(group);
     }
 
     @Override
-    public void addGroup(String group) {
-        groupTable.create(new ProductGroup(group));
+    public void deleteGroup(int id) {
+        groupTable.deleteGroup(id);
     }
 
     @Override
-    public int deleteGroup(int id) {
-        return groupTable.delete(id);
-    }
-
-    @Override
-    public int deleteGroup(String group) {
-        return groupTable.delete(group);
-    }
-
-    @Override
-    public void addProductToGroup(String group, String product) {
-        int groupId = groupTable.getId(group);
-        int productId = productTable.getId(product);
+    public void addProductToGroup(int groupId, int productId) {
         groupTable.addProductToGroup(groupId, productId);
     }
 
     @Override
-    public void setPrice(String product, double price) {
-        productTable.updatePrice(product, price);
+    public boolean hasProductsInGroup(int groupId) {
+        return groupTable.hasProductsInGroup(groupId);
     }
 
     @Override
-    public double getPrice(String product) {
-        Optional<Product> found = readByName(product);
-        if (found.isEmpty()) {
-            return 0;
-        }
-
-        return found.get().getPrice();
-    }
-
-    @Override
-    public boolean isGroupExists(String group) {
-        return groupTable.exists(group);
-    }
-
-    @Override
-    public boolean hasProductsInGroup(String group) {
-        return groupTable.hasProducts(group);
-    }
-
-    @Override
-    public boolean isProductInGroup(String group, String product) {
-        return groupTable.isProductInGroup(group, product);
+    public boolean isProductInGroup(int groupId, int productId) {
+        return groupTable.isProductInGroup(groupId, productId);
     }
 
     @Override

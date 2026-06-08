@@ -69,26 +69,26 @@ public class Processor {
 
     private String getProductCount(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        return "Ok:" + productService.getProductCount(args[0]);
+        return "Ok:" + productService.getProductQuantity(args[0]);
     }
 
     private String takeProduct(Message message) {
         String[] args = getArgs(message.getMessage(), 2);
-        productService.takeProduct(args[0], Integer.parseInt(args[1]));
+        productService.takeProductQuantity(args[0], Integer.parseInt(args[1]));
 
         return "Ok";
     }
 
     private String addProduct(Message message) {
         String[] args = getArgs(message.getMessage(), 2);
-        productService.addProduct(args[0], Integer.parseInt(args[1]));
+        productService.addProductQuantity(args[0], Integer.parseInt(args[1]));
 
         return "Ok";
     }
 
     private String addGroup(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        productService.addGroup(args[0]);
+        productService.createGroup(args[0]);
 
         return "Ok";
     }
@@ -102,21 +102,21 @@ public class Processor {
 
     private String setPrice(Message message) {
         String[] args = getArgs(message.getMessage(), 2);
-        productService.setPrice(args[0], Double.parseDouble(args[1]));
+        productService.setProductPrice(args[0], Double.parseDouble(args[1]));
 
         return "Ok";
     }
 
     private String createProduct(Message message) {
         String[] args = getArgs(message.getMessage(), 3);
-        int id = productService.create(new Product(args[0], Integer.parseInt(args[1]), Double.parseDouble(args[2])));
+        int id = productService.createProduct(new Product(args[0], Integer.parseInt(args[1]), Double.parseDouble(args[2])));
 
         return "Ok:" + id;
     }
 
     private String getProduct(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        Product product = productService.read(Integer.parseInt(args[0]))
+        Product product = productService.getProduct(Integer.parseInt(args[0]))
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         return "Ok:" + product;
@@ -124,7 +124,7 @@ public class Processor {
 
     private String getProductByName(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        Product product = productService.readByName(args[0])
+        Product product = productService.getProduct(args[0])
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         return "Ok:" + product;
@@ -133,12 +133,12 @@ public class Processor {
     private String getAllProducts(Message message) {
         getArgs(message.getMessage(), 0);
 
-        return "Ok:" + productService.readAll();
+        return "Ok:" + productService.getAllProducts();
     }
 
     private String updateProduct(Message message) {
         String[] args = getArgs(message.getMessage(), 4);
-        productService.update(new Product(Integer.parseInt(args[0]), args[1],
+        productService.updateProduct(new Product(Integer.parseInt(args[0]), args[1],
                 Integer.parseInt(args[2]), Double.parseDouble(args[3])));
 
         return "Ok";
@@ -146,14 +146,14 @@ public class Processor {
 
     private String deleteProduct(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        productService.delete(Integer.parseInt(args[0]));
+        productService.deleteProduct(Integer.parseInt(args[0]));
 
         return "Ok";
     }
 
     private String deleteAllProducts(Message message) {
         getArgs(message.getMessage(), 0);
-        int deleted = productService.deleteAll();
+        int deleted = productService.deleteAllProducts();
 
         return "Ok:" + deleted;
     }
@@ -167,7 +167,7 @@ public class Processor {
 
     private String getGroup(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        ProductGroup group = productService.readGroup(Integer.parseInt(args[0]))
+        ProductGroup group = productService.getGroup(Integer.parseInt(args[0]))
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
         return "Ok:" + group;
@@ -175,7 +175,7 @@ public class Processor {
 
     private String getGroupByName(Message message) {
         String[] args = getArgs(message.getMessage(), 1);
-        ProductGroup group = productService.readGroupByName(args[0])
+        ProductGroup group = productService.getGroup(args[0])
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
         return "Ok:" + group;
@@ -184,7 +184,7 @@ public class Processor {
     private String getAllGroups(Message message) {
         getArgs(message.getMessage(), 0);
 
-        return "Ok:" + productService.readAllGroups();
+        return "Ok:" + productService.getAllGroups();
     }
 
     private String updateGroup(Message message) {

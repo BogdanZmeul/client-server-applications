@@ -4,55 +4,50 @@ import db.Product;
 import db.ProductGroup;
 import db.ProductService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 public class ProductStorage implements ProductService {
-    private final Map<String, Integer> products = new HashMap<>();
-    private final Map<String, Set<String>> groups = new HashMap<>();
-    private final Map<String, Double> prices = new HashMap<>();
-    private final Map<Integer, Product> productsById = new HashMap<>();
-    private final Map<Integer, ProductGroup> groupsById = new HashMap<>();
-    private int idCounter = 1;
-    private int groupIdCounter = 1;
+    private final Map<Integer, Product> products = new HashMap<>();
+    private final Map<Integer, ProductGroup> groups = new HashMap<>();
+    private final Map<Integer, Set<Integer>> groupProducts = new HashMap<>();
+    private int productId = 1;
+    private int groupId = 1;
 
     @Override
-    public synchronized int create(Product product) {
+    public synchronized int createProduct(Product product) {
         checkCount(product.getCount());
         checkPrice(product.getPrice());
 
-        int id = idCounter++;
-        Product savedProduct = new Product(id, product.getName(), product.getCount(), product.getPrice());
-        productsById.put(id, savedProduct);
-        products.put(product.getName(), product.getCount());
-        prices.put(product.getName(), product.getPrice());
+        int id = productId++;
+        products.put(id, new Product(id, product.getName(), product.getCount(), product.getPrice()));
 
         return id;
     }
 
     @Override
-    public synchronized int count() {
-        return productsById.size();
+    public synchronized int getProductsCount() {
+        return products.size();
     }
 
     @Override
-    public synchronized List<Product> readAll() {
-        return new ArrayList<>(productsById.values());
+    public synchronized List<Product> getAllProducts() {
+        return new ArrayList<>(products.values());
     }
 
     @Override
-    public synchronized Optional<Product> read(int id) {
-        return Optional.ofNullable(productsById.get(id));
+    public synchronized Optional<Product> getProduct(int id) {
+        return Optional.ofNullable(products.get(id));
     }
 
     @Override
-    public synchronized Optional<Product> readByName(String name) {
-        for (Product product : productsById.values()) {
+    public synchronized Optional<Product> getProduct(String name) {
+        for (Product product : products.values()) {
             if (product.getName().equals(name)) {
                 return Optional.of(product);
             }
@@ -62,111 +57,150 @@ public class ProductStorage implements ProductService {
     }
 
     @Override
-    public synchronized int update(Product product) {
+    public synchronized void updateProduct(Product product) {
         checkCount(product.getCount());
         checkPrice(product.getPrice());
 
-        if (product.getId() == null || !productsById.containsKey(product.getId())) {
-            return 0;
+        if (product.getId() != null) {
+            products.put(product.getId(), product);
         }
-
-        productsById.put(product.getId(), product);
-        products.put(product.getName(), product.getCount());
-        prices.put(product.getName(), product.getPrice());
-
-        return 1;
     }
 
     @Override
-    public synchronized int delete(int id) {
-        Product product = productsById.remove(id);
-        if (product == null) {
-            return 0;
+    public synchronized void deleteProduct(int id) {
+        products.remove(id);
+
+        for (Set<Integer> productIds : groupProducts.values()) {
+            productIds.remove(id);
         }
-
-        products.remove(product.getName());
-        prices.remove(product.getName());
-
-        for (Set<String> groupProducts : groups.values()) {
-            groupProducts.remove(product.getName());
-        }
-
-        return 1;
     }
 
     @Override
-    public synchronized int deleteAll() {
-        int count = productsById.size();
-        productsById.clear();
+    public synchronized int deleteAllProducts() {
+        int count = products.size();
         products.clear();
-        prices.clear();
 
-        for (Set<String> groupProducts : groups.values()) {
-            groupProducts.clear();
+        for (Set<Integer> productIds : groupProducts.values()) {
+            productIds.clear();
         }
 
         return count;
     }
 
     @Override
-    public synchronized int getProductCount(String product) {
-        if (!products.containsKey(product)) {
+    public synchronized int getProductQuantity(int productId) {
+        Product product = products.get(productId);
+        if (product == null) {
             return 0;
         }
 
-        return products.get(product);
+        return product.getCount();
     }
 
     @Override
-    public synchronized void takeProduct(String product, int count) {
+    public synchronized int getProductQuantity(String product) {
+        Optional<Product> foundProduct = getProduct(product);
+        if (foundProduct.isEmpty()) {
+            return 0;
+        }
+
+        return foundProduct.get().getCount();
+    }
+
+    @Override
+    public synchronized void takeProductQuantity(int productId, int count) {
         checkCount(count);
 
-        int oldCount = getProductCount(product);
-        if (oldCount < count) {
+        Product product = products.get(productId);
+        if (product == null || product.getCount() < count) {
             throw new RuntimeException("Not enough product");
         }
 
-        products.put(product, oldCount - count);
-        updateProductModel(product, oldCount - count, getPrice(product));
+        product.setCount(product.getCount() - count);
     }
 
     @Override
-    public synchronized void addProduct(String product, int count) {
+    public synchronized void takeProductQuantity(String product, int count) {
+        takeProductQuantity(getProductId(product), count);
+    }
+
+    @Override
+    public synchronized void addProductQuantity(int productId, int count) {
         checkCount(count);
 
-        int oldCount = getProductCount(product);
-        products.put(product, oldCount + count);
-        updateProductModel(product, oldCount + count, getPrice(product));
+        Product product = products.get(productId);
+        if (product != null) {
+            product.setCount(product.getCount() + count);
+        }
+    }
+
+    @Override
+    public synchronized void addProductQuantity(String product, int count) {
+        addProductQuantity(getProductId(product), count);
+    }
+
+    @Override
+    public synchronized void setProductPrice(int productId, double price) {
+        checkPrice(price);
+
+        Product product = products.get(productId);
+        if (product != null) {
+            product.setPrice(price);
+        }
+    }
+
+    @Override
+    public synchronized void setProductPrice(String product, double price) {
+        setProductPrice(getProductId(product), price);
+    }
+
+    @Override
+    public synchronized double getProductPrice(int productId) {
+        Product product = products.get(productId);
+        if (product == null) {
+            return 0;
+        }
+
+        return product.getPrice();
+    }
+
+    @Override
+    public synchronized double getProductPrice(String product) {
+        return getProductPrice(getProductId(product));
     }
 
     @Override
     public synchronized int createGroup(ProductGroup group) {
-        int id = groupIdCounter++;
-        ProductGroup savedGroup = new ProductGroup(id, group.getName());
-        groupsById.put(id, savedGroup);
-        groups.put(group.getName(), new HashSet<>());
+        int id = groupId++;
+        groups.put(id, new ProductGroup(id, group.getName()));
+        groupProducts.put(id, new HashSet<>());
 
         return id;
     }
 
     @Override
-    public synchronized int groupsCount() {
-        return groupsById.size();
+    public synchronized void createGroup(String group) {
+        createGroup(new ProductGroup(group));
     }
 
     @Override
-    public synchronized List<ProductGroup> readAllGroups() {
-        return new ArrayList<>(groupsById.values());
+    public synchronized int getGroupsCount() {
+        return groups.size();
     }
 
     @Override
-    public synchronized Optional<ProductGroup> readGroup(int id) {
-        return Optional.ofNullable(groupsById.get(id));
+    public synchronized List<ProductGroup> getAllGroups() {
+        return new ArrayList<>(groups.values());
     }
 
     @Override
-    public synchronized Optional<ProductGroup> readGroupByName(String name) {
-        for (ProductGroup group : groupsById.values()) {
+    public synchronized Optional<ProductGroup> getGroup(int id) {
+        return Optional.ofNullable(groups.get(id));
+    }
+
+    @Override
+    public synchronized Optional<ProductGroup> getGroup(String name) {
+        for (ProductGroup group : groups.values()) {
             if (group.getName().equals(name)) {
                 return Optional.of(group);
             }
@@ -176,91 +210,84 @@ public class ProductStorage implements ProductService {
     }
 
     @Override
-    public synchronized int updateGroup(ProductGroup group) {
-        if (group.getId() == null || !groupsById.containsKey(group.getId())) {
-            return 0;
-        }
-
-        ProductGroup oldGroup = groupsById.get(group.getId());
-        Set<String> productsInGroup = groups.remove(oldGroup.getName());
-        groups.put(group.getName(), productsInGroup);
-        groupsById.put(group.getId(), group);
-
-        return 1;
-    }
-
-    @Override
-    public synchronized void addGroup(String group) {
-        if (readGroupByName(group).isEmpty()) {
-            createGroup(new ProductGroup(group));
+    public synchronized void updateGroup(ProductGroup group) {
+        if (group.getId() != null) {
+            groups.put(group.getId(), group);
         }
     }
 
     @Override
-    public synchronized int deleteGroup(int id) {
-        ProductGroup group = groupsById.remove(id);
-        if (group == null) {
-            return 0;
-        }
-
-        groups.remove(group.getName());
-        return 1;
+    public synchronized void deleteGroup(int id) {
+        groups.remove(id);
+        groupProducts.remove(id);
     }
 
     @Override
-    public synchronized int deleteGroup(String group) {
-        Optional<ProductGroup> foundGroup = readGroupByName(group);
-        if (foundGroup.isEmpty()) {
-            return 0;
-        }
+    public synchronized void deleteGroup(String group) {
+        deleteGroup(getGroupId(group));
+    }
 
-        return deleteGroup(foundGroup.get().getId());
+    @Override
+    public synchronized void addProductToGroup(int groupId, int productId) {
+        if (groupProducts.containsKey(groupId) && products.containsKey(productId)) {
+            groupProducts.get(groupId).add(productId);
+        }
     }
 
     @Override
     public synchronized void addProductToGroup(String group, String product) {
-        addGroup(group);
-        groups.get(group).add(product);
-    }
-
-    @Override
-    public synchronized void setPrice(String product, double price) {
-        checkPrice(price);
-
-        prices.put(product, price);
-        updateProductModel(product, getProductCount(product), price);
-    }
-
-    @Override
-    public synchronized double getPrice(String product) {
-        if (!prices.containsKey(product)) {
-            return 0;
-        }
-
-        return prices.get(product);
+        addProductToGroup(getGroupId(group), getProductId(product));
     }
 
     @Override
     public synchronized boolean isGroupExists(String group) {
-        return readGroupByName(group).isPresent();
+        return getGroup(group).isPresent();
+    }
+
+    @Override
+    public synchronized boolean hasProductsInGroup(int groupId) {
+        if (!groupProducts.containsKey(groupId)) {
+            return false;
+        }
+
+        return !groupProducts.get(groupId).isEmpty();
     }
 
     @Override
     public synchronized boolean hasProductsInGroup(String group) {
-        if (!groups.containsKey(group)) {
+        return hasProductsInGroup(getGroupId(group));
+    }
+
+    @Override
+    public synchronized boolean isProductInGroup(int groupId, int productId) {
+        if (!groupProducts.containsKey(groupId)) {
             return false;
         }
 
-        return !groups.get(group).isEmpty();
+        return groupProducts.get(groupId).contains(productId);
     }
 
     @Override
     public synchronized boolean isProductInGroup(String group, String product) {
-        if (!groups.containsKey(group)) {
-            return false;
+        return isProductInGroup(getGroupId(group), getProductId(product));
+    }
+
+    private int getProductId(String product) {
+        Optional<Product> foundProduct = getProduct(product);
+        if (foundProduct.isEmpty()) {
+            return -1;
         }
 
-        return groups.get(group).contains(product);
+        return foundProduct.get().getId();
+    }
+
+    private int getGroupId(String group) {
+        Optional<ProductGroup> foundGroup = getGroup(group);
+        if (foundGroup.isEmpty()) {
+            return -1;
+        }
+
+        return foundGroup.get().getId();
     }
 
     private void checkCount(int count) {
@@ -273,19 +300,5 @@ public class ProductStorage implements ProductService {
         if (price < 0) {
             throw new RuntimeException("Price cannot be negative");
         }
-    }
-
-    private void updateProductModel(String name, int count, double price) {
-        Optional<Product> found = readByName(name);
-        if (found.isPresent()) {
-            Product product = found.get();
-            product.setCount(count);
-            product.setPrice(price);
-            productsById.put(product.getId(), product);
-            return;
-        }
-
-        int id = idCounter++;
-        productsById.put(id, new Product(id, name, count, price));
     }
 }
