@@ -2,6 +2,8 @@ package network.processor;
 
 import data.Message;
 import data.Package;
+import db.Product;
+import db.ProductGroup;
 import db.ProductService;
 import utils.MessageType;
 
@@ -47,6 +49,20 @@ public class Processor {
             case MessageType.ADD_GROUP -> addGroup(message);
             case MessageType.ADD_PRODUCT_TO_GROUP -> addProductToGroup(message);
             case MessageType.SET_PRICE -> setPrice(message);
+            case MessageType.CREATE_PRODUCT -> createProduct(message);
+            case MessageType.GET_PRODUCT -> getProduct(message);
+            case MessageType.GET_PRODUCT_BY_NAME -> getProductByName(message);
+            case MessageType.GET_ALL_PRODUCTS -> getAllProducts(message);
+            case MessageType.UPDATE_PRODUCT -> updateProduct(message);
+            case MessageType.DELETE_PRODUCT -> deleteProduct(message);
+            case MessageType.DELETE_ALL_PRODUCTS -> deleteAllProducts(message);
+            case MessageType.CREATE_GROUP -> createGroup(message);
+            case MessageType.GET_GROUP -> getGroup(message);
+            case MessageType.GET_GROUP_BY_NAME -> getGroupByName(message);
+            case MessageType.GET_ALL_GROUPS -> getAllGroups(message);
+            case MessageType.UPDATE_GROUP -> updateGroup(message);
+            case MessageType.DELETE_GROUP -> deleteGroup(message);
+            case MessageType.DELETE_GROUP_BY_NAME -> deleteGroupByName(message);
             default -> throw new RuntimeException("Unknown command");
         };
     }
@@ -91,7 +107,116 @@ public class Processor {
         return "Ok";
     }
 
+    private String createProduct(Message message) {
+        String[] args = getArgs(message.getMessage(), 3);
+        int id = productService.create(new Product(args[0], Integer.parseInt(args[1]), Double.parseDouble(args[2])));
+
+        return "Ok:" + id;
+    }
+
+    private String getProduct(Message message) {
+        String[] args = getArgs(message.getMessage(), 1);
+        Product product = productService.read(Integer.parseInt(args[0]))
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        return "Ok:" + product;
+    }
+
+    private String getProductByName(Message message) {
+        String[] args = getArgs(message.getMessage(), 1);
+        Product product = productService.readByName(args[0])
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        return "Ok:" + product;
+    }
+
+    private String getAllProducts(Message message) {
+        getArgs(message.getMessage(), 0);
+
+        return "Ok:" + productService.readAll();
+    }
+
+    private String updateProduct(Message message) {
+        String[] args = getArgs(message.getMessage(), 4);
+        productService.update(new Product(Integer.parseInt(args[0]), args[1],
+                Integer.parseInt(args[2]), Double.parseDouble(args[3])));
+
+        return "Ok";
+    }
+
+    private String deleteProduct(Message message) {
+        String[] args = getArgs(message.getMessage(), 1);
+        productService.delete(Integer.parseInt(args[0]));
+
+        return "Ok";
+    }
+
+    private String deleteAllProducts(Message message) {
+        getArgs(message.getMessage(), 0);
+        int deleted = productService.deleteAll();
+
+        return "Ok:" + deleted;
+    }
+
+    private String createGroup(Message message) {
+        String[] args = getArgs(message.getMessage(), 1);
+        int id = productService.createGroup(new ProductGroup(args[0]));
+
+        return "Ok:" + id;
+    }
+
+    private String getGroup(Message message) {
+        String[] args = getArgs(message.getMessage(), 1);
+        ProductGroup group = productService.readGroup(Integer.parseInt(args[0]))
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        return "Ok:" + group;
+    }
+
+    private String getGroupByName(Message message) {
+        String[] args = getArgs(message.getMessage(), 1);
+        ProductGroup group = productService.readGroupByName(args[0])
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        return "Ok:" + group;
+    }
+
+    private String getAllGroups(Message message) {
+        getArgs(message.getMessage(), 0);
+
+        return "Ok:" + productService.readAllGroups();
+    }
+
+    private String updateGroup(Message message) {
+        String[] args = getArgs(message.getMessage(), 2);
+        productService.updateGroup(new ProductGroup(Integer.parseInt(args[0]), args[1]));
+
+        return "Ok";
+    }
+
+    private String deleteGroup(Message message) {
+        String[] args = getArgs(message.getMessage(), 1);
+        productService.deleteGroup(Integer.parseInt(args[0]));
+
+        return "Ok";
+    }
+
+    private String deleteGroupByName(Message message) {
+        String[] args = getArgs(message.getMessage(), 1);
+        productService.deleteGroup(args[0]);
+
+        return "Ok";
+    }
+
     private String[] getArgs(String text, int count) {
+        if (count == 0) {
+            if (text == null || text.isBlank()) {
+                return new String[0];
+            }
+
+            throw new RuntimeException("Invalid command");
+        }
+
         if (text == null) {
             throw new RuntimeException("Message cannot be null");
         }
