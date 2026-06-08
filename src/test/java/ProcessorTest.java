@@ -1,57 +1,77 @@
-import network.storage.ProductStorage;
 import data.Message;
 import data.Package;
+import db.SqliteProductService;
 import network.processor.Processor;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import service.StoreService;
 import utils.MessageType;
+
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProcessorTest {
+    @TempDir
+    Path tempDir;
 
-    private ProductStorage productStorage;
+    private SqliteProductService productDb;
+    private StoreService storeService;
     private Processor processor;
 
     @BeforeEach
     void setUp() {
-        productStorage = new ProductStorage();
-        processor = new Processor(productStorage);
+        productDb = new SqliteProductService(tempDir.resolve("test.db").toString());
+        storeService = new StoreService(productDb);
+        processor = new Processor(storeService);
+    }
+
+    @AfterEach
+    void close() {
+        productDb.close();
     }
 
     @Test
     void shouldAddAndTakeProductCorrectly() {
+        createProduct("apple", 0, 0);
         processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;100")));
         processor.process(new Package((byte) 1, 2, new Message(MessageType.TAKE_PRODUCT, 1, "apple;30")));
 
         Package actual = processor.process(new Package((byte) 1, 3, new Message(MessageType.GET_PRODUCT_COUNT, 1, "apple")));
 
-        assertEquals(70, productStorage.getProductCount("apple"));
+        assertEquals(70, storeService.getProductQuantity("apple"));
         assertEquals("Ok:70", actual.getMessage().getMessage());
     }
 
     @Test
     void shouldAddGroupAndProductToGroup() {
+        createProduct("apple", 0, 0);
         processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_GROUP, 1, "fruits")));
         processor.process(new Package((byte) 1, 2, new Message(MessageType.ADD_PRODUCT_TO_GROUP, 1, "fruits;apple")));
 
-        assertTrue(productStorage.isProductInGroup("fruits", "apple"));
+        assertTrue(storeService.isProductInGroup("fruits", "apple"));
     }
 
     @Test
     void shouldSetPrice() {
+        createProduct("apple", 0, 0);
+
         Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.SET_PRICE, 1, "apple;35.5")));
 
         assertEquals("Ok", actual.getMessage().getMessage());
-        assertEquals(35.5, productStorage.getPrice("apple"));
+        assertEquals(35.5, storeService.getProductPrice("apple"));
     }
 
     @Test
     void shouldReturnErrorWhenNotEnoughProduct() {
+        createProduct("apple", 0, 0);
+
         Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.TAKE_PRODUCT, 1, "apple;10")));
 
         assertEquals("Error:Not enough product", actual.getMessage().getMessage());
-        assertEquals(0, productStorage.getProductCount("apple"));
+        assertEquals(0, storeService.getProductQuantity("apple"));
     }
 
     @Test
@@ -63,18 +83,22 @@ class ProcessorTest {
 
     @Test
     void shouldReturnErrorWhenProductCountIsNegative() {
+        createProduct("apple", 0, 0);
+
         Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;-1")));
 
         assertEquals("Error:Count cannot be negative", actual.getMessage().getMessage());
-        assertEquals(0, productStorage.getProductCount("apple"));
+        assertEquals(0, storeService.getProductQuantity("apple"));
     }
 
     @Test
     void shouldReturnErrorWhenPriceIsNegative() {
+        createProduct("apple", 0, 0);
+
         Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.SET_PRICE, 1, "apple;-10")));
 
         assertEquals("Error:Price cannot be negative", actual.getMessage().getMessage());
-        assertEquals(0, productStorage.getPrice("apple"));
+        assertEquals(0, storeService.getProductPrice("apple"));
     }
 
     @Test
@@ -86,6 +110,7 @@ class ProcessorTest {
 
     @Test
     void shouldProcessAddMessagesInManyThreads() throws Exception {
+        createProduct("apple", 0, 0);
         int threadsCount = 10;
         int messagesCount = 100;
         Thread[] threads = new Thread[threadsCount];
@@ -104,11 +129,12 @@ class ProcessorTest {
             thread.join();
         }
 
-        assertEquals(threadsCount * messagesCount, productStorage.getProductCount("apple"));
+        assertEquals(threadsCount * messagesCount, storeService.getProductQuantity("apple"));
     }
 
     @Test
     void shouldProcessAddAndTakeMessagesInManyThreads() throws Exception {
+        createProduct("apple", 0, 0);
         processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;1000")));
 
         int addThreadsCount = 5;
@@ -145,6 +171,11 @@ class ProcessorTest {
             thread.join();
         }
 
-        assertEquals(1500, productStorage.getProductCount("apple"));
+        assertEquals(1500, storeService.getProductQuantity("apple"));
+    }
+
+    private void createProduct(String name, int count, double price) {
+        processor.process(new Package((byte) 1, 1, new Message(MessageType.CREATE_PRODUCT, 1,
+                name + ";" + count + ";" + price)));
     }
 }

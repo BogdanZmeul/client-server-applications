@@ -1,17 +1,20 @@
 import cipher.Decoder;
 import cipher.Encoder;
-import network.storage.ProductStorage;
 import data.Message;
 import data.Package;
+import db.SqliteProductService;
 import network.Server;
 import network.processor.Processor;
 import network.protocol.NetworkReceiver;
 import network.protocol.NetworkSender;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import service.StoreService;
 import utils.MessageType;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.net.InetAddress;
+import java.nio.file.Path;
 import java.security.Key;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,6 +23,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ServerTest {
+    @TempDir
+    Path tempDir;
 
     @Test
     void shouldProcessMessagesWithManyThreadsAndWorkers() throws Exception {
@@ -54,20 +59,23 @@ class ServerTest {
             thread.join();
         }
 
-        ProductStorage productStorage = new ProductStorage();
-        Processor processor = new Processor(productStorage);
-        Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
-                sender, 2, 2, 4, 3, 5);
+        try (SqliteProductService productDb = new SqliteProductService(tempDir.resolve("server1.db").toString())) {
+            StoreService storeService = new StoreService(productDb);
+            Processor processor = new Processor(storeService);
+            createProduct(processor, "apple", 0, 0);
+            Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
+                    sender, 2, 2, 4, 3, 5);
 
-        server.start();
-        server.awaitStop();
+            server.start();
+            server.awaitStop();
 
-        assertEquals(threadsCount * messagesCount, productStorage.getProductCount("apple"));
-        assertEquals(threadsCount * messagesCount, sender.getSentData().size());
+            assertEquals(threadsCount * messagesCount, storeService.getProductQuantity("apple"));
+            assertEquals(threadsCount * messagesCount, sender.getSentData().size());
 
-        for (byte[] data : sender.getSentData()) {
-            Package answer = responseDecoder.decode(data);
-            assertEquals("Ok", answer.getMessage().getMessage());
+            for (byte[] data : sender.getSentData()) {
+                Package answer = responseDecoder.decode(data);
+                assertEquals("Ok", answer.getMessage().getMessage());
+            }
         }
     }
 
@@ -90,35 +98,38 @@ class ServerTest {
         addMessage(receiver, requestEncoder, packetId, MessageType.TAKE_PRODUCT, "apple;100");
         addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT, "apple");
 
-        ProductStorage productStorage = new ProductStorage();
-        Processor processor = new Processor(productStorage);
-        Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
-                sender, 1, 1, 1, 1, 1);
+        try (SqliteProductService productDb = new SqliteProductService(tempDir.resolve("server2.db").toString())) {
+            StoreService storeService = new StoreService(productDb);
+            Processor processor = new Processor(storeService);
+            createProduct(processor, "apple", 0, 0);
+            Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
+                    sender, 1, 1, 1, 1, 1);
 
-        server.start();
-        server.awaitStop();
+            server.start();
+            server.awaitStop();
 
-        int okResponses = 0;
-        int errorResponses = 0;
+            int okResponses = 0;
+            int errorResponses = 0;
 
-        for (byte[] data : sender.getSentData()) {
-            Package answer = responseDecoder.decode(data);
-            String message = answer.getMessage().getMessage();
+            for (byte[] data : sender.getSentData()) {
+                Package answer = responseDecoder.decode(data);
+                String message = answer.getMessage().getMessage();
 
-            if (message.startsWith("Ok")) {
-                okResponses++;
+                if (message.startsWith("Ok")) {
+                    okResponses++;
+                }
+                if (message.startsWith("Error")) {
+                    errorResponses++;
+                }
             }
-            if (message.startsWith("Error")) {
-                errorResponses++;
-            }
+
+            assertEquals(8, sender.getSentData().size());
+            assertEquals(30, storeService.getProductQuantity("apple"));
+            assertTrue(storeService.isProductInGroup("fruits", "apple"));
+            assertEquals(12.5, storeService.getProductPrice("apple"));
+            assertEquals(6, okResponses);
+            assertEquals(2, errorResponses);
         }
-
-        assertEquals(8, sender.getSentData().size());
-        assertEquals(30, productStorage.getProductCount("apple"));
-        assertTrue(productStorage.isProductInGroup("fruits", "apple"));
-        assertEquals(12.5, productStorage.getPrice("apple"));
-        assertEquals(6, okResponses);
-        assertEquals(2, errorResponses);
     }
 
     @Test
@@ -152,20 +163,23 @@ class ServerTest {
             thread.join();
         }
 
-        ProductStorage productStorage = new ProductStorage();
-        Processor processor = new Processor(productStorage);
-        Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
-                sender, 3, 4, 6, 4, 5);
+        try (SqliteProductService productDb = new SqliteProductService(tempDir.resolve("server3.db").toString())) {
+            StoreService storeService = new StoreService(productDb);
+            Processor processor = new Processor(storeService);
+            createProduct(processor, "apple", 0, 0);
+            Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
+                    sender, 3, 4, 6, 4, 5);
 
-        server.start();
-        server.awaitStop();
+            server.start();
+            server.awaitStop();
 
-        assertEquals(threadsCount * messagesCount, productStorage.getProductCount("apple"));
-        assertEquals(threadsCount * messagesCount, sender.getSentData().size());
+            assertEquals(threadsCount * messagesCount, storeService.getProductQuantity("apple"));
+            assertEquals(threadsCount * messagesCount, sender.getSentData().size());
 
-        for (byte[] data : sender.getSentData()) {
-            Package answer = responseDecoder.decode(data);
-            assertEquals("Ok", answer.getMessage().getMessage());
+            for (byte[] data : sender.getSentData()) {
+                Package answer = responseDecoder.decode(data);
+                assertEquals("Ok", answer.getMessage().getMessage());
+            }
         }
     }
 
@@ -173,6 +187,11 @@ class ServerTest {
                                    int type, String text) throws Exception {
         Package pack = new Package((byte) 1, packetId.getAndIncrement(), new Message(type, 1, text));
         receiver.add(encoder.encode(pack));
+    }
+
+    private static void createProduct(Processor processor, String name, int count, double price) {
+        processor.process(new Package((byte) 1, 1, new Message(MessageType.CREATE_PRODUCT, 1,
+                name + ";" + count + ";" + price)));
     }
 
     private static class QueueNetworkReceiver implements NetworkReceiver {
