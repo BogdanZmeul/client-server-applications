@@ -40,6 +40,16 @@ public class SqliteProductService implements ProductDatabase, AutoCloseable {
     }
 
     @Override
+    public List<Product> searchProducts(Filter filter) {
+        return productTable.searchProducts(filter);
+    }
+
+    @Override
+    public int countProducts(Filter filter) {
+        return productTable.countProducts(filter);
+    }
+
+    @Override
     public Optional<Product> getProduct(int id) {
         return productTable.getProduct(id);
     }

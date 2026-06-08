@@ -21,4 +21,5 @@ public class MessageType {
     public static final int UPDATE_GROUP = 18;
     public static final int DELETE_GROUP = 19;
     public static final int DELETE_GROUP_BY_NAME = 20;
+    public static final int SEARCH_PRODUCTS = 21;
 }

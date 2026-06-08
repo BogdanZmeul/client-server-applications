@@ -10,6 +10,8 @@ public interface ProductService {
 
     List<Product> getAllProducts();
 
+    ProductPage searchProducts(Filter filter);
+
     Optional<Product> getProduct(int id);
 
     Optional<Product> getProduct(String name);

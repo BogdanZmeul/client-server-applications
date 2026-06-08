@@ -2,10 +2,13 @@ package network.processor;
 
 import data.Message;
 import data.Package;
+import db.Filter;
 import db.Product;
 import db.ProductGroup;
 import db.ProductService;
 import utils.MessageType;
+
+import java.util.Arrays;
 
 public class Processor {
     private final ProductService productService;
@@ -63,6 +66,7 @@ public class Processor {
             case MessageType.UPDATE_GROUP -> updateGroup(message);
             case MessageType.DELETE_GROUP -> deleteGroup(message);
             case MessageType.DELETE_GROUP_BY_NAME -> deleteGroupByName(message);
+            case MessageType.SEARCH_PRODUCTS -> searchProducts(message);
             default -> throw new RuntimeException("Unknown command");
         };
     }
@@ -206,6 +210,48 @@ public class Processor {
         productService.deleteGroup(args[0]);
 
         return "Ok";
+    }
+
+    private String searchProducts(Message message) {
+        Filter filter = getFilter(message.getMessage());
+
+        return "Ok:" + productService.searchProducts(filter);
+    }
+
+    private Filter getFilter(String text) {
+        Filter filter = new Filter();
+
+        if (text == null || text.isBlank()) {
+            return filter;
+        }
+
+        String[] args = text.split(";");
+        for (String arg : args) {
+            String[] keyAndValue = arg.split("=", 2);
+            if (keyAndValue.length != 2) {
+                throw new RuntimeException("Invalid filter");
+            }
+
+            setFilterValue(filter, keyAndValue[0].trim(), keyAndValue[1].trim());
+        }
+
+        return filter;
+    }
+
+    private void setFilterValue(Filter filter, String key, String value) {
+        switch (key) {
+            case "name" -> filter.name = value;
+            case "group", "groups", "category", "categories" -> filter.groups = Arrays.stream(value.split(","))
+                    .map(String::trim)
+                    .toList();
+            case "minCount" -> filter.minCount = Integer.parseInt(value);
+            case "maxCount" -> filter.maxCount = Integer.parseInt(value);
+            case "minPrice" -> filter.minPrice = Double.parseDouble(value);
+            case "maxPrice" -> filter.maxPrice = Double.parseDouble(value);
+            case "page" -> filter.page = Integer.parseInt(value);
+            case "pageSize" -> filter.pageSize = Integer.parseInt(value);
+            default -> throw new RuntimeException("Unknown filter");
+        }
     }
 
     private String[] getArgs(String text, int count) {

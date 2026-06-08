@@ -7,7 +7,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class ProductTable {
     private final Connection connection;
@@ -68,6 +71,43 @@ class ProductTable {
             return products;
         } catch (SQLException e) {
             throw new RuntimeException("Can't read products", e);
+        }
+    }
+
+    List<Product> searchProducts(Filter filter) {
+        SqlWrapper query = getSearchQuery(filter);
+
+        try (PreparedStatement ps = connection.prepareStatement(query.sql.toString())) {
+            setParams(ps, query.params);
+
+            List<Product> products = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    products.add(toProduct(rs));
+                }
+            }
+
+            return products;
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't search products", e);
+        }
+    }
+
+    int countProducts(Filter filter) {
+        SqlWrapper query = getCountQuery(filter);
+
+        try (PreparedStatement ps = connection.prepareStatement(query.sql.toString())) {
+            setParams(ps, query.params);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+
+            return 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't count filtered products", e);
         }
     }
 
@@ -198,5 +238,119 @@ class ProductTable {
 
     private Product toProduct(ResultSet rs) throws SQLException {
         return new Product(rs.getInt("id"), rs.getString("name"), rs.getInt("count"), rs.getDouble("price"));
+    }
+
+    private SqlWrapper getSearchQuery(Filter filter) {
+        SqlWrapper query = getQuery("""
+                SELECT p.*
+                FROM product p
+                LEFT JOIN product_group g ON p.group_id = g.id
+                """, filter);
+
+        query.sql.append("""
+                ORDER BY p.id
+                LIMIT ?
+                OFFSET ?
+                """);
+        query.params.add(filter.pageSize);
+        query.params.add((filter.page - 1) * filter.pageSize);
+
+        return query;
+    }
+
+    private SqlWrapper getCountQuery(Filter filter) {
+        return getQuery("""
+                SELECT COUNT(*)
+                FROM product p
+                LEFT JOIN product_group g ON p.group_id = g.id
+                """, filter);
+    }
+
+    private SqlWrapper getQuery(String selectSql, Filter filter) {
+        SqlWrapper filterSql = getFilterSql(filter);
+
+        if (filterSql.sql == null) {
+            filterSql.sql = new StringBuilder(selectSql);
+        } else {
+            filterSql.sql.insert(0, selectSql);
+        }
+
+        return filterSql;
+    }
+
+    private SqlWrapper getFilterSql(Filter filter) {
+        SqlWrapper sqlWrapper = new SqlWrapper();
+
+        String where = Stream.of(
+                stringLike("p.name", filter.name, sqlWrapper.params),
+                stringIn("g.name", filter.groups, sqlWrapper.params),
+                numberMoreOrEquals("p.count", filter.minCount, sqlWrapper.params),
+                numberLessOrEquals("p.count", filter.maxCount, sqlWrapper.params),
+                numberMoreOrEquals("p.price", filter.minPrice, sqlWrapper.params),
+                numberLessOrEquals("p.price", filter.maxPrice, sqlWrapper.params)
+        )
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" AND "));
+
+        if (!where.isBlank()) {
+            sqlWrapper.sql = new StringBuilder();
+            sqlWrapper.sql.append("WHERE ");
+            sqlWrapper.sql.append(where);
+            sqlWrapper.sql.append("\n");
+        }
+
+        return sqlWrapper;
+    }
+
+    private String stringLike(String columnName, String value, List<Object> params) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        params.add("%" + value + "%");
+        return columnName + " LIKE ?";
+    }
+
+    private String stringIn(String columnName, List<String> values, List<Object> params) {
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+
+        params.addAll(values);
+
+        String questionMarks = values.stream()
+                .map(value -> "?")
+                .collect(Collectors.joining(", "));
+
+        return columnName + " IN (" + questionMarks + ")";
+    }
+
+    private String numberMoreOrEquals(String columnName, Number value, List<Object> params) {
+        if (value == null) {
+            return null;
+        }
+
+        params.add(value);
+        return columnName + " >= ?";
+    }
+
+    private String numberLessOrEquals(String columnName, Number value, List<Object> params) {
+        if (value == null) {
+            return null;
+        }
+
+        params.add(value);
+        return columnName + " <= ?";
+    }
+
+    private void setParams(PreparedStatement ps, List<Object> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+    }
+
+    private static class SqlWrapper {
+        private StringBuilder sql;
+        private final List<Object> params = new ArrayList<>();
     }
 }

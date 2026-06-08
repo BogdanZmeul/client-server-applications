@@ -1,11 +1,14 @@
 package service;
 
+import db.Filter;
 import db.Product;
 import db.ProductDatabase;
 import db.ProductGroup;
+import db.ProductPage;
 import db.ProductService;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class StoreService implements ProductService {
@@ -35,6 +38,16 @@ public class StoreService implements ProductService {
     @Override
     public synchronized List<Product> getAllProducts() {
         return productDb.getAllProducts();
+    }
+
+    @Override
+    public synchronized ProductPage searchProducts(Filter filter) {
+        checkFilter(filter);
+
+        List<Product> products = productDb.searchProducts(filter);
+        int totalCount = productDb.countProducts(filter);
+
+        return new ProductPage(products, totalCount, filter.page, filter.pageSize);
     }
 
     @Override
@@ -263,6 +276,68 @@ public class StoreService implements ProductService {
     private void checkPrice(double price) {
         if (price < 0) {
             throw new RuntimeException("Price cannot be negative");
+        }
+    }
+
+    private void checkFilter(Filter filter) {
+        if (filter == null) {
+            throw new RuntimeException("Filter cannot be null");
+        }
+
+        if (filter.name != null && filter.name.isBlank()) {
+            filter.name = null;
+        }
+
+        if (filter.groups != null) {
+            filter.groups = filter.groups.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .filter(group -> !group.isBlank())
+                    .toList();
+
+            if (filter.groups.isEmpty()) {
+                filter.groups = null;
+            }
+        }
+
+        if (filter.page == null) {
+            filter.page = 1;
+        }
+
+        if (filter.pageSize == null) {
+            filter.pageSize = 10;
+        }
+
+        if (filter.page < 1) {
+            throw new RuntimeException("Page cannot be less than 1");
+        }
+
+        if (filter.pageSize < 1) {
+            throw new RuntimeException("Page size cannot be less than 1");
+        }
+
+        if (filter.minCount != null) {
+            checkCount(filter.minCount);
+        }
+
+        if (filter.maxCount != null) {
+            checkCount(filter.maxCount);
+        }
+
+        if (filter.minCount != null && filter.maxCount != null && filter.minCount > filter.maxCount) {
+            throw new RuntimeException("Min count cannot be greater than max count");
+        }
+
+        if (filter.minPrice != null) {
+            checkPrice(filter.minPrice);
+        }
+
+        if (filter.maxPrice != null) {
+            checkPrice(filter.maxPrice);
+        }
+
+        if (filter.minPrice != null && filter.maxPrice != null && filter.minPrice > filter.maxPrice) {
+            throw new RuntimeException("Min price cannot be greater than max price");
         }
     }
 

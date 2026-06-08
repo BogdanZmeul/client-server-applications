@@ -10,6 +10,10 @@ public interface ProductDatabase {
 
     List<Product> getAllProducts();
 
+    List<Product> searchProducts(Filter filter);
+
+    int countProducts(Filter filter);
+
     Optional<Product> getProduct(int id);
 
     Optional<Product> getProduct(String name);
