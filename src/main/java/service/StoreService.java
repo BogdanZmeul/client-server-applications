@@ -6,6 +6,7 @@ import db.service.ProductDatabase;
 import db.model.ProductGroup;
 import db.model.ProductPage;
 import db.service.ProductService;
+import db.DatabaseException;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,11 +24,14 @@ public class StoreService implements ProductService {
         checkCount(product.getCount());
         checkPrice(product.getPrice());
 
-        if (productDb.getProduct(product.getName()).isPresent()) {
-            throw new StoreException("Product already exists");
+        try {
+            return productDb.createProduct(product);
+        } catch (DatabaseException e) {
+            if (isUniqueConstraintViolation(e)) {
+                throw new StoreException("Product already exists");
+            }
+            throw e;
         }
-
-        return productDb.createProduct(product);
     }
 
     @Override
@@ -69,12 +73,14 @@ public class StoreService implements ProductService {
             throw new StoreException("Product not found");
         }
 
-        Optional<Product> productWithSameName = productDb.getProduct(product.getName());
-        if (productWithSameName.isPresent() && !productWithSameName.get().getId().equals(product.getId())) {
-            throw new StoreException("Product already exists");
+        try {
+            productDb.updateProduct(product);
+        } catch (DatabaseException e) {
+            if (isUniqueConstraintViolation(e)) {
+                throw new StoreException("Product already exists");
+            }
+            throw e;
         }
-
-        productDb.updateProduct(product);
     }
 
     @Override
@@ -144,11 +150,14 @@ public class StoreService implements ProductService {
     public int createGroup(ProductGroup group) {
         checkGroupName(group.getName());
 
-        if (productDb.getGroup(group.getName()).isPresent()) {
-            throw new StoreException("Group already exists");
+        try {
+            return productDb.createGroup(group);
+        } catch (DatabaseException e) {
+            if (isUniqueConstraintViolation(e)) {
+                throw new StoreException("Group already exists");
+            }
+            throw e;
         }
-
-        return productDb.createGroup(group);
     }
 
     @Override
@@ -184,12 +193,14 @@ public class StoreService implements ProductService {
             throw new StoreException("Group not found");
         }
 
-        Optional<ProductGroup> groupWithSameName = productDb.getGroup(group.getName());
-        if (groupWithSameName.isPresent() && !groupWithSameName.get().getId().equals(group.getId())) {
-            throw new StoreException("Group already exists");
+        try {
+            productDb.updateGroup(group);
+        } catch (DatabaseException e) {
+            if (isUniqueConstraintViolation(e)) {
+                throw new StoreException("Group already exists");
+            }
+            throw e;
         }
-
-        productDb.updateGroup(group);
     }
 
     @Override
@@ -374,5 +385,16 @@ public class StoreService implements ProductService {
         }
 
         return foundGroup.get();
+    }
+
+    private boolean isUniqueConstraintViolation(Throwable e) {
+        Throwable current = e;
+        while (current != null) {
+            if (current.getMessage() != null && current.getMessage().contains("UNIQUE constraint failed")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }

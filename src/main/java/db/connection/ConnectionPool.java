@@ -27,7 +27,7 @@ public class ConnectionPool implements AutoCloseable {
                 try (java.sql.Statement stmt = connection.createStatement()) {
                     stmt.execute("PRAGMA journal_mode=WAL;");
                     stmt.execute("PRAGMA synchronous=NORMAL;");
-                    stmt.execute("PRAGMA busy_timeout=5000;");
+                    stmt.execute("PRAGMA busy_timeout=3000;");
                 }
                 freeConnections.add(connection);
                 allConnections.add(connection);
