@@ -22,13 +22,13 @@ class StoreServiceConcurrencyTest {
     void shouldAllowOnlyOneClientToBuySingleProduct() throws Exception {
         try (SqliteProductService productDb = new SqliteProductService(tempDir.resolve("buy.db").toString(), 10)) {
             StoreService storeService = new StoreService(productDb);
-            storeService.createProduct(new Product("apple", 1, 5));
+            int productId = storeService.createProduct(new Product("apple", 1, 5));
             AtomicInteger successCount = new AtomicInteger(0);
             AtomicInteger errorCount = new AtomicInteger(0);
 
             runInManyThreads(1000, () -> {
                 try {
-                    storeService.takeProductQuantity("apple", 1);
+                    storeService.takeProductQuantity(productId, 1);
                     successCount.incrementAndGet();
                 } catch (RuntimeException e) {
                     errorCount.incrementAndGet();
@@ -37,7 +37,7 @@ class StoreServiceConcurrencyTest {
 
             assertEquals(1, successCount.get());
             assertEquals(999, errorCount.get());
-            assertEquals(0, storeService.getProductQuantity("apple"));
+            assertEquals(0, storeService.getProductQuantity(productId));
         }
     }
 
@@ -45,19 +45,19 @@ class StoreServiceConcurrencyTest {
     void shouldAddProductQuantityInManyThreads() throws Exception {
         try (SqliteProductService productDb = new SqliteProductService(tempDir.resolve("add.db").toString(), 10)) {
             StoreService storeService = new StoreService(productDb);
-            storeService.createProduct(new Product("apple", 0, 5));
+            int productId = storeService.createProduct(new Product("apple", 0, 5));
             AtomicInteger errorCount = new AtomicInteger(0);
 
             runInManyThreads(1000, () -> {
                 try {
-                    storeService.addProductQuantity("apple", 1);
+                    storeService.addProductQuantity(productId, 1);
                 } catch (RuntimeException e) {
                     errorCount.incrementAndGet();
                 }
             });
 
             assertEquals(0, errorCount.get());
-            assertEquals(1000, storeService.getProductQuantity("apple"));
+            assertEquals(1000, storeService.getProductQuantity(productId));
         }
     }
 

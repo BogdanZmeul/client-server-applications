@@ -49,7 +49,6 @@ class ProductTableTest {
         assertEquals(5.5, product.getPrice());
         assertEquals(1, productTable.getProductsCount());
         assertEquals(1, productTable.getAllProducts().size());
-        assertTrue(productTable.getProduct("apple").isPresent());
 
         productTable.updateProduct(new Product(productId, "green apple", 20, 7.5));
 
@@ -139,7 +138,6 @@ class ProductTableTest {
     @Test
     void shouldReturnEmptyOptionalWhenProductDoesNotExist() {
         assertTrue(productTable.getProduct(100).isEmpty());
-        assertTrue(productTable.getProduct("apple").isEmpty());
     }
 
     @Test
@@ -188,6 +186,7 @@ class ProductTableTest {
 
     private void initDb() throws SQLException {
         try (Statement statement = connection.createStatement()) {
+            statement.execute("PRAGMA foreign_keys=ON;");
             statement.execute("""
                     CREATE TABLE product_group (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,

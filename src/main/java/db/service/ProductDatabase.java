@@ -20,8 +20,6 @@ public interface ProductDatabase {
 
     Optional<Product> getProduct(int id);
 
-    Optional<Product> getProduct(String name);
-
     void updateProduct(Product product);
 
     void deleteProduct(int id);
@@ -45,8 +43,6 @@ public interface ProductDatabase {
     List<ProductGroup> getAllGroups();
 
     Optional<ProductGroup> getGroup(int id);
-
-    Optional<ProductGroup> getGroup(String name);
 
     void updateGroup(ProductGroup group);
 

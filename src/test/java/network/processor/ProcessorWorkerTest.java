@@ -38,12 +38,12 @@ class ProcessorWorkerTest {
 
     @Test
     void shouldProcessorWorkerProcessMessage() {
-        createProduct("apple", 0, 0);
+        int productId = createProduct("apple", 0, 0);
         Package endPackage = new Package();
         BlockingQueue<Package> input = new LinkedBlockingQueue<>();
         BlockingQueue<Package> output = new LinkedBlockingQueue<>();
 
-        input.add(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;10")));
+        input.add(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, productId + ";10")));
         input.add(endPackage);
 
         ProcessorWorker processorWorker = new ProcessorWorker(processor, input, output, endPackage);
@@ -51,7 +51,7 @@ class ProcessorWorkerTest {
 
         Package actual = output.poll();
 
-        assertEquals(10, storeService.getProductQuantity("apple"));
+        assertEquals(10, storeService.getProductQuantity(productId));
         assertNotNull(actual);
         assertEquals("Ok", actual.getMessage().getMessage());
     }
@@ -72,31 +72,31 @@ class ProcessorWorkerTest {
 
     @Test
     void shouldProcessorWorkerProcessSeveralPackages() {
-        createProduct("apple", 0, 0);
+        int productId = createProduct("apple", 0, 0);
         Package endPackage = new Package();
         BlockingQueue<Package> input = new LinkedBlockingQueue<>();
         BlockingQueue<Package> output = new LinkedBlockingQueue<>();
 
-        input.add(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;10")));
-        input.add(new Package((byte) 1, 2, new Message(MessageType.ADD_PRODUCT, 1, "apple;5")));
-        input.add(new Package((byte) 1, 3, new Message(MessageType.TAKE_PRODUCT, 1, "apple;3")));
+        input.add(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, productId + ";10")));
+        input.add(new Package((byte) 1, 2, new Message(MessageType.ADD_PRODUCT, 1, productId + ";5")));
+        input.add(new Package((byte) 1, 3, new Message(MessageType.TAKE_PRODUCT, 1, productId + ";3")));
         input.add(endPackage);
 
         ProcessorWorker processorWorker = new ProcessorWorker(processor, input, output, endPackage);
         processorWorker.run();
 
-        assertEquals(12, storeService.getProductQuantity("apple"));
+        assertEquals(12, storeService.getProductQuantity(productId));
         assertEquals(3, output.size());
     }
 
     @Test
     void shouldProcessorWorkerCreateErrorResponse() {
-        createProduct("apple", 0, 0);
+        int productId = createProduct("apple", 0, 0);
         Package endPackage = new Package();
         BlockingQueue<Package> input = new LinkedBlockingQueue<>();
         BlockingQueue<Package> output = new LinkedBlockingQueue<>();
 
-        input.add(new Package((byte) 1, 1, new Message(MessageType.TAKE_PRODUCT, 1, "apple;10")));
+        input.add(new Package((byte) 1, 1, new Message(MessageType.TAKE_PRODUCT, 1, productId + ";10")));
         input.add(endPackage);
 
         ProcessorWorker processorWorker = new ProcessorWorker(processor, input, output, endPackage);
@@ -105,11 +105,13 @@ class ProcessorWorkerTest {
         Package actual = output.poll();
 
         assertNotNull(actual);
-        assertEquals("Error:Changes to product have not been applied", actual.getMessage().getMessage());
+        assertEquals("Error:Product not found or not enough quantity", actual.getMessage().getMessage());
     }
 
-    private void createProduct(String name, int count, double price) {
-        processor.process(new Package((byte) 1, 1, new Message(MessageType.CREATE_PRODUCT, 1,
+    private int createProduct(String name, int count, double price) {
+        Package answer = processor.process(new Package((byte) 1, 1, new Message(MessageType.CREATE_PRODUCT, 1,
                 name + ";" + count + ";" + price)));
+        assertTrue(answer.getMessage().getMessage().startsWith("Ok:"));
+        return Integer.parseInt(answer.getMessage().getMessage().substring(3));
     }
 }

@@ -58,11 +58,6 @@ public class SqliteProductService implements ProductDatabase, AutoCloseable {
     }
 
     @Override
-    public Optional<Product> getProduct(String name) {
-        return withProductTable(productTable -> productTable.getProduct(name));
-    }
-
-    @Override
     public void updateProduct(Product product) {
         withProductTable(productTable -> {
             productTable.updateProduct(product);
@@ -135,11 +130,6 @@ public class SqliteProductService implements ProductDatabase, AutoCloseable {
     @Override
     public Optional<ProductGroup> getGroup(int id) {
         return withGroupTable(groupTable -> groupTable.getGroup(id));
-    }
-
-    @Override
-    public Optional<ProductGroup> getGroup(String name) {
-        return withGroupTable(groupTable -> groupTable.getGroup(name));
     }
 
     @Override

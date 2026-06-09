@@ -60,16 +60,11 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public Optional<Product> getProduct(String name) {
-        return productDb.getProduct(name);
-    }
-
-    @Override
     public void updateProduct(Product product) {
         checkCount(product.getCount());
         checkPrice(product.getPrice());
 
-        if (product.getId() == null || productDb.getProduct(product.getId()).isEmpty()) {
+        if (product.getId() == null) {
             throw new StoreException("Product not found");
         }
 
@@ -79,13 +74,23 @@ public class StoreService implements ProductService {
             if (isUniqueConstraintViolation(e)) {
                 throw new StoreException("Product already exists");
             }
+            if (e.getMessage() != null && e.getMessage().contains("Changes to product have not been applied")) {
+                throw new StoreException("Product not found");
+            }
             throw e;
         }
     }
 
     @Override
     public void deleteProduct(int id) {
-        productDb.deleteProduct(id);
+        try {
+            productDb.deleteProduct(id);
+        } catch (DatabaseException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Changes to product have not been applied")) {
+                throw new StoreException("Product not found");
+            }
+            throw e;
+        }
     }
 
     @Override
@@ -99,51 +104,47 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public int getProductQuantity(String product) {
-        return getProductQuantity(getProductOrThrow(product).getId());
-    }
-
-    @Override
     public void takeProductQuantity(int productId, int count) {
         checkCount(count);
-        productDb.takeProductQuantity(productId, count);
-    }
-
-    @Override
-    public void takeProductQuantity(String product, int count) {
-        takeProductQuantity(getProductOrThrow(product).getId(), count);
+        try {
+            productDb.takeProductQuantity(productId, count);
+        } catch (DatabaseException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Changes to product have not been applied")) {
+                throw new StoreException("Product not found or not enough quantity");
+            }
+            throw e;
+        }
     }
 
     @Override
     public void addProductQuantity(int productId, int count) {
         checkCount(count);
-        productDb.addProductQuantity(productId, count);
-    }
-
-    @Override
-    public void addProductQuantity(String product, int count) {
-        addProductQuantity(getProductOrThrow(product).getId(), count);
+        try {
+            productDb.addProductQuantity(productId, count);
+        } catch (DatabaseException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Changes to product have not been applied")) {
+                throw new StoreException("Product not found");
+            }
+            throw e;
+        }
     }
 
     @Override
     public void setProductPrice(int productId, double price) {
         checkPrice(price);
-        productDb.setProductPrice(productId, price);
-    }
-
-    @Override
-    public void setProductPrice(String product, double price) {
-        setProductPrice(getProductOrThrow(product).getId(), price);
+        try {
+            productDb.setProductPrice(productId, price);
+        } catch (DatabaseException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Changes to product have not been applied")) {
+                throw new StoreException("Product not found");
+            }
+            throw e;
+        }
     }
 
     @Override
     public double getProductPrice(int productId) {
         return productDb.getProductPrice(productId);
-    }
-
-    @Override
-    public double getProductPrice(String product) {
-        return getProductPrice(getProductOrThrow(product).getId());
     }
 
     @Override
@@ -158,11 +159,6 @@ public class StoreService implements ProductService {
             }
             throw e;
         }
-    }
-
-    @Override
-    public void createGroup(String group) {
-        createGroup(new ProductGroup(group));
     }
 
     @Override
@@ -181,15 +177,10 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public Optional<ProductGroup> getGroup(String name) {
-        return productDb.getGroup(name);
-    }
-
-    @Override
     public void updateGroup(ProductGroup group) {
         checkGroupName(group.getName());
 
-        if (group.getId() == null || productDb.getGroup(group.getId()).isEmpty()) {
+        if (group.getId() == null) {
             throw new StoreException("Group not found");
         }
 
@@ -199,64 +190,45 @@ public class StoreService implements ProductService {
             if (isUniqueConstraintViolation(e)) {
                 throw new StoreException("Group already exists");
             }
+            if (e.getMessage() != null && e.getMessage().contains("Changes to group have not been applied")) {
+                throw new StoreException("Group not found");
+            }
             throw e;
         }
     }
 
     @Override
     public void deleteGroup(int id) {
-        productDb.deleteGroup(id);
-    }
-
-    @Override
-    public void deleteGroup(String group) {
-        deleteGroup(getGroupOrThrow(group).getId());
+        try {
+            productDb.deleteGroup(id);
+        } catch (DatabaseException e) {
+            if (isForeignKeyConstraintViolation(e)) {
+                throw new StoreException("Cannot delete group with products");
+            }
+            if (e.getMessage() != null && e.getMessage().contains("Changes to group have not been applied")) {
+                throw new StoreException("Group not found");
+            }
+            throw e;
+        }
     }
 
     @Override
     public void addProductToGroup(int groupId, int productId) {
-        checkGroupExists(groupId);
-        checkProductExists(productId);
-
-        if (productDb.isProductInGroup(groupId, productId)) {
-            throw new StoreException("Product already exists in group");
+        try {
+            productDb.addProductToGroup(groupId, productId);
+        } catch (DatabaseException e) {
+            throw new StoreException("Product not found, group not found or product already in group");
         }
-
-        productDb.addProductToGroup(groupId, productId);
-    }
-
-    @Override
-    public void addProductToGroup(String group, String product) {
-        addProductToGroup(getGroupOrThrow(group).getId(), getProductOrThrow(product).getId());
-    }
-
-    @Override
-    public boolean isGroupExists(String group) {
-        return productDb.getGroup(group).isPresent();
     }
 
     @Override
     public boolean hasProductsInGroup(int groupId) {
-        checkGroupExists(groupId);
         return productDb.hasProductsInGroup(groupId);
     }
 
     @Override
-    public boolean hasProductsInGroup(String group) {
-        return hasProductsInGroup(getGroupOrThrow(group).getId());
-    }
-
-    @Override
     public boolean isProductInGroup(int groupId, int productId) {
-        checkGroupExists(groupId);
-        checkProductExists(productId);
-
         return productDb.isProductInGroup(groupId, productId);
-    }
-
-    @Override
-    public boolean isProductInGroup(String group, String product) {
-        return isProductInGroup(getGroupOrThrow(group).getId(), getProductOrThrow(product).getId());
     }
 
     private void checkCount(int count) {
@@ -331,58 +303,21 @@ public class StoreService implements ProductService {
         }
     }
 
-    private void checkProductExists(int productId) {
-        if (productDb.getProduct(productId).isEmpty()) {
-            throw new StoreException("Product not found");
-        }
-    }
-
-    private void checkGroupExists(int groupId) {
-        if (productDb.getGroup(groupId).isEmpty()) {
-            throw new StoreException("Group not found");
-        }
-    }
-
-    private Product getProductOrThrow(int productId) {
-        Optional<Product> foundProduct = productDb.getProduct(productId);
-        if (foundProduct.isEmpty()) {
-            throw new StoreException("Product not found");
-        }
-
-        return foundProduct.get();
-    }
-
-    private Product getProductOrThrow(String product) {
-        Optional<Product> foundProduct = productDb.getProduct(product);
-        if (foundProduct.isEmpty()) {
-            throw new StoreException("Product not found");
-        }
-
-        return foundProduct.get();
-    }
-
-    private ProductGroup getGroupOrThrow(int id) {
-        Optional<ProductGroup> foundGroup = productDb.getGroup(id);
-        if (foundGroup.isEmpty()) {
-            throw new StoreException("Group not found");
-        }
-
-        return foundGroup.get();
-    }
-
-    private ProductGroup getGroupOrThrow(String group) {
-        Optional<ProductGroup> foundGroup = productDb.getGroup(group);
-        if (foundGroup.isEmpty()) {
-            throw new StoreException("Group not found");
-        }
-
-        return foundGroup.get();
-    }
-
     private boolean isUniqueConstraintViolation(Throwable e) {
         Throwable current = e;
         while (current != null) {
-            if (current.getMessage() != null && current.getMessage().contains("UNIQUE constraint failed")) {
+            if (current.getMessage() != null && current.getMessage().contains("[SQLITE_CONSTRAINT_UNIQUE]")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private boolean isForeignKeyConstraintViolation(Throwable e) {
+        Throwable current = e;
+        while (current != null) {
+            if (current.getMessage() != null && current.getMessage().contains("FOREIGN KEY constraint failed")) {
                 return true;
             }
             current = current.getCause();

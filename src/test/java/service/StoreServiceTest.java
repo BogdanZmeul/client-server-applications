@@ -4,7 +4,6 @@ import db.model.Filter;
 import db.model.Product;
 import db.model.ProductGroup;
 import db.model.ProductPage;
-import db.DatabaseException;
 import db.service.SqliteProductService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,10 +46,10 @@ class StoreServiceTest {
 
     @Test
     void shouldRejectDuplicateGroup() {
-        storeService.createGroup("fruits");
+        storeService.createGroup(new ProductGroup("fruits"));
 
         StoreException error = assertThrows(StoreException.class,
-                () -> storeService.createGroup("fruits"));
+                () -> storeService.createGroup(new ProductGroup("fruits")));
 
         assertEquals("Group already exists", error.getMessage());
         assertEquals(1, storeService.getGroupsCount());
@@ -81,9 +80,17 @@ class StoreServiceTest {
     }
 
     @Test
+    void shouldRejectUpdateProductWithoutId() {
+        StoreException error = assertThrows(StoreException.class,
+                () -> storeService.updateProduct(new Product("apple", 10, 5)));
+
+        assertEquals("Product not found", error.getMessage());
+    }
+
+    @Test
     void shouldRejectUpdateGroupWithExistingName() {
         int fruitsId = storeService.createGroup(new ProductGroup("fruits"));
-        storeService.createGroup("drinks");
+        storeService.createGroup(new ProductGroup("drinks"));
 
         StoreException error = assertThrows(StoreException.class,
                 () -> storeService.updateGroup(new ProductGroup(fruitsId, "drinks")));
@@ -93,15 +100,23 @@ class StoreServiceTest {
     }
 
     @Test
+    void shouldRejectUpdateGroupWithoutId() {
+        StoreException error = assertThrows(StoreException.class,
+                () -> storeService.updateGroup(new ProductGroup("fruits")));
+
+        assertEquals("Group not found", error.getMessage());
+    }
+
+    @Test
     void shouldRejectDeletingGroupWithProducts() {
         int productId = storeService.createProduct(new Product("apple", 10, 5));
         int groupId = storeService.createGroup(new ProductGroup("fruits"));
         storeService.addProductToGroup(groupId, productId);
 
-        DatabaseException error = assertThrows(DatabaseException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.deleteGroup(groupId));
 
-        assertEquals("Changes to group have not been applied", error.getMessage());
+        assertEquals("Cannot delete group with products", error.getMessage());
         assertTrue(storeService.getGroup(groupId).isPresent());
     }
 
@@ -112,7 +127,7 @@ class StoreServiceTest {
         StoreException error = assertThrows(StoreException.class,
                 () -> storeService.addProductToGroup(100, productId));
 
-        assertEquals("Group not found", error.getMessage());
+        assertEquals("Product not found, group not found or product already in group", error.getMessage());
     }
 
     @Test
@@ -122,7 +137,7 @@ class StoreServiceTest {
         StoreException error = assertThrows(StoreException.class,
                 () -> storeService.addProductToGroup(groupId, 100));
 
-        assertEquals("Product not found", error.getMessage());
+        assertEquals("Product not found, group not found or product already in group", error.getMessage());
     }
 
     @Test
@@ -134,7 +149,7 @@ class StoreServiceTest {
         StoreException error = assertThrows(StoreException.class,
                 () -> storeService.addProductToGroup(groupId, productId));
 
-        assertEquals("Product already exists in group", error.getMessage());
+        assertEquals("Product not found, group not found or product already in group", error.getMessage());
     }
 
     @Test

@@ -45,7 +45,6 @@ class GroupTableTest {
         assertEquals("fruits", group.getName());
         assertEquals(1, groupTable.getGroupsCount());
         assertEquals(1, groupTable.getAllGroups().size());
-        assertTrue(groupTable.getGroup("fruits").isPresent());
 
         groupTable.updateGroup(new ProductGroup(groupId, "fresh fruits"));
 
@@ -81,7 +80,6 @@ class GroupTableTest {
     @Test
     void shouldReturnEmptyOptionalWhenGroupDoesNotExist() {
         assertTrue(groupTable.getGroup(100).isEmpty());
-        assertTrue(groupTable.getGroup("fruits").isEmpty());
     }
 
     @Test
@@ -93,7 +91,7 @@ class GroupTableTest {
         DatabaseException error = assertThrows(DatabaseException.class,
                 () -> groupTable.deleteGroup(groupId));
 
-        assertEquals("Changes to group have not been applied", error.getMessage());
+        assertTrue(error.getMessage().contains("Can't delete group by id: " + groupId));
         assertTrue(groupTable.getGroup(groupId).isPresent());
     }
 
@@ -112,7 +110,7 @@ class GroupTableTest {
 
         assertEquals("Changes to group have not been applied", updateError.getMessage());
         assertEquals("Changes to group have not been applied", deleteError.getMessage());
-        assertEquals("Changes to group have not been applied", wrongGroupError.getMessage());
+        assertEquals("Can't add product to group", wrongGroupError.getMessage());
         assertEquals("Changes to group have not been applied", wrongProductError.getMessage());
     }
 
@@ -129,6 +127,7 @@ class GroupTableTest {
 
     private void initDb() throws SQLException {
         try (Statement statement = connection.createStatement()) {
+            statement.execute("PRAGMA foreign_keys=ON;");
             statement.execute("""
                     CREATE TABLE product_group (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,

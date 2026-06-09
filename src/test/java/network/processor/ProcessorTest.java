@@ -36,43 +36,43 @@ class ProcessorTest {
 
     @Test
     void shouldAddAndTakeProductCorrectly() {
-        createProduct("apple", 0, 0);
-        processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;100")));
-        processor.process(new Package((byte) 1, 2, new Message(MessageType.TAKE_PRODUCT, 1, "apple;30")));
+        int productId = createProduct("apple", 0, 0);
+        processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, productId + ";100")));
+        processor.process(new Package((byte) 1, 2, new Message(MessageType.TAKE_PRODUCT, 1, productId + ";30")));
 
-        Package actual = processor.process(new Package((byte) 1, 3, new Message(MessageType.GET_PRODUCT_COUNT, 1, "apple")));
+        Package actual = processor.process(new Package((byte) 1, 3, new Message(MessageType.GET_PRODUCT_COUNT, 1, String.valueOf(productId))));
 
-        assertEquals(70, storeService.getProductQuantity("apple"));
+        assertEquals(70, storeService.getProductQuantity(productId));
         assertEquals("Ok:70", actual.getMessage().getMessage());
     }
 
     @Test
     void shouldAddGroupAndProductToGroup() {
-        createProduct("apple", 0, 0);
-        processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_GROUP, 1, "fruits")));
-        processor.process(new Package((byte) 1, 2, new Message(MessageType.ADD_PRODUCT_TO_GROUP, 1, "fruits;apple")));
+        int productId = createProduct("apple", 0, 0);
+        int groupId = createGroup("fruits");
+        processor.process(new Package((byte) 1, 2, new Message(MessageType.ADD_PRODUCT_TO_GROUP, 1, groupId + ";" + productId)));
 
-        assertTrue(storeService.isProductInGroup("fruits", "apple"));
+        assertTrue(storeService.isProductInGroup(groupId, productId));
     }
 
     @Test
     void shouldSetPrice() {
-        createProduct("apple", 0, 0);
+        int productId = createProduct("apple", 0, 0);
 
-        Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.SET_PRICE, 1, "apple;35.5")));
+        Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.SET_PRICE, 1, productId + ";35.5")));
 
         assertEquals("Ok", actual.getMessage().getMessage());
-        assertEquals(35.5, storeService.getProductPrice("apple"));
+        assertEquals(35.5, storeService.getProductPrice(productId));
     }
 
     @Test
     void shouldReturnErrorWhenNotEnoughProduct() {
-        createProduct("apple", 0, 0);
+        int productId = createProduct("apple", 0, 0);
 
-        Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.TAKE_PRODUCT, 1, "apple;10")));
+        Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.TAKE_PRODUCT, 1, productId + ";10")));
 
-        assertEquals("Error:Changes to product have not been applied", actual.getMessage().getMessage());
-        assertEquals(0, storeService.getProductQuantity("apple"));
+        assertEquals("Error:Product not found or not enough quantity", actual.getMessage().getMessage());
+        assertEquals(0, storeService.getProductQuantity(productId));
     }
 
     @Test
@@ -84,22 +84,22 @@ class ProcessorTest {
 
     @Test
     void shouldReturnErrorWhenProductCountIsNegative() {
-        createProduct("apple", 0, 0);
+        int productId = createProduct("apple", 0, 0);
 
-        Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;-1")));
+        Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, productId + ";-1")));
 
         assertEquals("Error:Count cannot be negative", actual.getMessage().getMessage());
-        assertEquals(0, storeService.getProductQuantity("apple"));
+        assertEquals(0, storeService.getProductQuantity(productId));
     }
 
     @Test
     void shouldReturnErrorWhenPriceIsNegative() {
-        createProduct("apple", 0, 0);
+        int productId = createProduct("apple", 0, 0);
 
-        Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.SET_PRICE, 1, "apple;-10")));
+        Package actual = processor.process(new Package((byte) 1, 1, new Message(MessageType.SET_PRICE, 1, productId + ";-10")));
 
         assertEquals("Error:Price cannot be negative", actual.getMessage().getMessage());
-        assertEquals(0, storeService.getProductPrice("apple"));
+        assertEquals(0, storeService.getProductPrice(productId));
     }
 
     @Test
@@ -111,7 +111,7 @@ class ProcessorTest {
 
     @Test
     void shouldProcessAddMessagesInManyThreads() throws Exception {
-        createProduct("apple", 0, 0);
+        int productId = createProduct("apple", 0, 0);
         int threadsCount = 10;
         int messagesCount = 100;
         Thread[] threads = new Thread[threadsCount];
@@ -119,7 +119,7 @@ class ProcessorTest {
         for (int i = 0; i < threadsCount; i++) {
             threads[i] = new Thread(() -> {
                 for (int j = 0; j < messagesCount; j++) {
-                    processor.process(new Package((byte) 1, j, new Message(MessageType.ADD_PRODUCT, 1, "apple;1")));
+                    processor.process(new Package((byte) 1, j, new Message(MessageType.ADD_PRODUCT, 1, productId + ";1")));
                 }
             });
 
@@ -130,13 +130,13 @@ class ProcessorTest {
             thread.join();
         }
 
-        assertEquals(threadsCount * messagesCount, storeService.getProductQuantity("apple"));
+        assertEquals(threadsCount * messagesCount, storeService.getProductQuantity(productId));
     }
 
     @Test
     void shouldProcessAddAndTakeMessagesInManyThreads() throws Exception {
-        createProduct("apple", 0, 0);
-        processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;1000")));
+        int productId = createProduct("apple", 0, 0);
+        processor.process(new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, productId + ";1000")));
 
         int addThreadsCount = 5;
         int takeThreadsCount = 5;
@@ -147,7 +147,7 @@ class ProcessorTest {
         for (int i = 0; i < addThreadsCount; i++) {
             addThreads[i] = new Thread(() -> {
                 for (int j = 0; j < messagesCount; j++) {
-                    processor.process(new Package((byte) 1, j, new Message(MessageType.ADD_PRODUCT, 1, "apple;2")));
+                    processor.process(new Package((byte) 1, j, new Message(MessageType.ADD_PRODUCT, 1, productId + ";2")));
                 }
             });
 
@@ -157,7 +157,7 @@ class ProcessorTest {
         for (int i = 0; i < takeThreadsCount; i++) {
             takeThreads[i] = new Thread(() -> {
                 for (int j = 0; j < messagesCount; j++) {
-                    processor.process(new Package((byte) 1, j, new Message(MessageType.TAKE_PRODUCT, 1, "apple;1")));
+                    processor.process(new Package((byte) 1, j, new Message(MessageType.TAKE_PRODUCT, 1, productId + ";1")));
                 }
             });
 
@@ -172,11 +172,22 @@ class ProcessorTest {
             thread.join();
         }
 
-        assertEquals(1500, storeService.getProductQuantity("apple"));
+        assertEquals(1500, storeService.getProductQuantity(productId));
     }
 
-    private void createProduct(String name, int count, double price) {
-        processor.process(new Package((byte) 1, 1, new Message(MessageType.CREATE_PRODUCT, 1,
+    private int createProduct(String name, int count, double price) {
+        Package answer = processor.process(new Package((byte) 1, 1, new Message(MessageType.CREATE_PRODUCT, 1,
                 name + ";" + count + ";" + price)));
+        return getId(answer);
+    }
+
+    private int createGroup(String name) {
+        Package answer = processor.process(new Package((byte) 1, 1, new Message(MessageType.CREATE_GROUP, 1, name)));
+        return getId(answer);
+    }
+
+    private int getId(Package answer) {
+        assertTrue(answer.getMessage().getMessage().startsWith("Ok:"));
+        return Integer.parseInt(answer.getMessage().getMessage().substring(3));
     }
 }

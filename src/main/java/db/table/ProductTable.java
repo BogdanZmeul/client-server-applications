@@ -131,22 +131,6 @@ public class ProductTable {
         }
     }
 
-    public Optional<Product> getProduct(String name) {
-        try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product WHERE name = ?")) {
-            ps.setString(1, name);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(toProduct(rs));
-                }
-            }
-
-            return Optional.empty();
-        } catch (SQLException e) {
-            throw new DatabaseException("Can't read product by name: " + name, e);
-        }
-    }
-
     public void updateProduct(Product product) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "UPDATE product SET name = ?, count = ?, price = ? WHERE id = ?")) {

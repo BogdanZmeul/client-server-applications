@@ -88,22 +88,6 @@ public class GroupTable {
         }
     }
 
-    public Optional<ProductGroup> getGroup(String name) {
-        try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product_group WHERE name = ?")) {
-            ps.setString(1, name);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(toProductGroup(rs));
-                }
-            }
-
-            return Optional.empty();
-        } catch (SQLException e) {
-            throw new DatabaseException("Can't read group by name: " + name, e);
-        }
-    }
-
     public void updateGroup(ProductGroup group) {
         try (PreparedStatement ps = connection.prepareStatement("UPDATE product_group SET name = ? WHERE id = ?")) {
             ps.setString(1, group.getName());
@@ -119,16 +103,8 @@ public class GroupTable {
     }
 
     public void deleteGroup(int id) {
-        try (PreparedStatement ps = connection.prepareStatement("""
-                DELETE FROM product_group
-                WHERE id = ? AND NOT EXISTS (
-                    SELECT 1
-                    FROM product
-                    WHERE group_id = ?
-                )
-                """)) {
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product_group WHERE id = ?")) {
             ps.setInt(1, id);
-            ps.setInt(2, id);
 
             int deleted = ps.executeUpdate();
             if (deleted < 1) {
@@ -141,7 +117,7 @@ public class GroupTable {
 
     public void addProductToGroup(int groupId, int productId) {
         try (PreparedStatement ps = connection.prepareStatement(
-                "UPDATE product SET group_id = ? WHERE id = ? AND EXISTS (SELECT 1 FROM product_group WHERE id = ?)")) {
+                "UPDATE product SET group_id = ? WHERE id = ? AND (group_id IS NULL OR group_id != ?)")) {
             ps.setInt(1, groupId);
             ps.setInt(2, productId);
             ps.setInt(3, groupId);

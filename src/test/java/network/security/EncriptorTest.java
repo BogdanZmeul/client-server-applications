@@ -70,8 +70,8 @@ class EncriptorTest {
         Package endPackage = new Package();
         BlockingQueue<Package> input = new LinkedBlockingQueue<>();
         BlockingQueue<byte[]> output = new LinkedBlockingQueue<>();
-        Package firstPackage = new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;10"));
-        Package secondPackage = new Package((byte) 1, 2, new Message(MessageType.SET_PRICE, 1, "apple;12.5"));
+        Package firstPackage = new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "1;10"));
+        Package secondPackage = new Package((byte) 1, 2, new Message(MessageType.SET_PRICE, 1, "1;12.5"));
 
         input.add(firstPackage);
         input.add(secondPackage);
@@ -85,7 +85,7 @@ class EncriptorTest {
 
         assertEquals(1, firstActual.getbPktId());
         assertEquals(2, secondActual.getbPktId());
-        assertEquals("apple;10", firstActual.getMessage().getMessage());
-        assertEquals("apple;12.5", secondActual.getMessage().getMessage());
+        assertEquals("1;10", firstActual.getMessage().getMessage());
+        assertEquals("1;12.5", secondActual.getMessage().getMessage());
     }
 }

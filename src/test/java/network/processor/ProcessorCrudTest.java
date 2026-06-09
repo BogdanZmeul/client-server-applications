@@ -37,11 +37,10 @@ class ProcessorCrudTest {
         int productId = getId(process(MessageType.CREATE_PRODUCT, "apple;10;5.5"));
 
         assertTrue(process(MessageType.GET_PRODUCT, String.valueOf(productId)).contains("apple"));
-        assertTrue(process(MessageType.GET_PRODUCT_BY_NAME, "apple").contains("apple"));
         assertTrue(process(MessageType.GET_ALL_PRODUCTS, "").contains("apple"));
 
         assertEquals("Ok", process(MessageType.UPDATE_PRODUCT, productId + ";green apple;20;7.5"));
-        assertTrue(process(MessageType.GET_PRODUCT_BY_NAME, "green apple").contains("green apple"));
+        assertTrue(process(MessageType.GET_PRODUCT, String.valueOf(productId)).contains("green apple"));
 
         assertEquals("Ok", process(MessageType.DELETE_PRODUCT, String.valueOf(productId)));
         assertEquals("Error:Product not found", process(MessageType.GET_PRODUCT, String.valueOf(productId)));
@@ -63,26 +62,25 @@ class ProcessorCrudTest {
         int groupId = getId(process(MessageType.CREATE_GROUP, "fruits"));
 
         assertTrue(process(MessageType.GET_GROUP, String.valueOf(groupId)).contains("fruits"));
-        assertTrue(process(MessageType.GET_GROUP_BY_NAME, "fruits").contains("fruits"));
         assertTrue(process(MessageType.GET_ALL_GROUPS, "").contains("fruits"));
 
         assertEquals("Ok", process(MessageType.UPDATE_GROUP, groupId + ";fresh fruits"));
-        assertTrue(process(MessageType.GET_GROUP_BY_NAME, "fresh fruits").contains("fresh fruits"));
+        assertTrue(process(MessageType.GET_GROUP, String.valueOf(groupId)).contains("fresh fruits"));
 
-        assertEquals("Ok", process(MessageType.DELETE_GROUP_BY_NAME, "fresh fruits"));
+        assertEquals("Ok", process(MessageType.DELETE_GROUP, String.valueOf(groupId)));
         assertEquals("Error:Group not found", process(MessageType.GET_GROUP, String.valueOf(groupId)));
     }
 
     @Test
     void shouldProcessSearchProductsCommand() {
-        process(MessageType.CREATE_PRODUCT, "apple;10;5.5");
-        process(MessageType.CREATE_PRODUCT, "green apple;50;7.2");
-        process(MessageType.CREATE_PRODUCT, "milk;20;3.0");
-        process(MessageType.CREATE_GROUP, "fruits");
-        process(MessageType.CREATE_GROUP, "drinks");
-        process(MessageType.ADD_PRODUCT_TO_GROUP, "fruits;apple");
-        process(MessageType.ADD_PRODUCT_TO_GROUP, "fruits;green apple");
-        process(MessageType.ADD_PRODUCT_TO_GROUP, "drinks;milk");
+        int appleId = getId(process(MessageType.CREATE_PRODUCT, "apple;10;5.5"));
+        int greenAppleId = getId(process(MessageType.CREATE_PRODUCT, "green apple;50;7.2"));
+        int milkId = getId(process(MessageType.CREATE_PRODUCT, "milk;20;3.0"));
+        int fruitsId = getId(process(MessageType.CREATE_GROUP, "fruits"));
+        int drinksId = getId(process(MessageType.CREATE_GROUP, "drinks"));
+        process(MessageType.ADD_PRODUCT_TO_GROUP, fruitsId + ";" + appleId);
+        process(MessageType.ADD_PRODUCT_TO_GROUP, fruitsId + ";" + greenAppleId);
+        process(MessageType.ADD_PRODUCT_TO_GROUP, drinksId + ";" + milkId);
 
         String answer = process(MessageType.SEARCH_PRODUCTS,
                 "name=apple;groups=fruits;minCount=5;maxCount=20;minPrice=5;maxPrice=6;page=1;pageSize=10");
@@ -119,7 +117,7 @@ class ProcessorCrudTest {
     void shouldReturnErrorWhenGroupCrudCommandHasWrongArgumentsCount() {
         assertEquals("Error:Invalid command", process(MessageType.CREATE_GROUP, "fruits;extra"));
         assertEquals("Error:Invalid command", process(MessageType.UPDATE_GROUP, "1"));
-        assertEquals("Error:Invalid command", process(MessageType.DELETE_GROUP_BY_NAME, "fruits;extra"));
+        assertEquals("Error:Invalid command", process(MessageType.DELETE_GROUP, "1;2"));
         assertEquals("Error:Invalid command", process(MessageType.GET_ALL_GROUPS, "fruits"));
     }
 

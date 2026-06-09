@@ -28,6 +28,7 @@ public class ConnectionPool implements AutoCloseable {
                     stmt.execute("PRAGMA journal_mode=WAL;");
                     stmt.execute("PRAGMA synchronous=NORMAL;");
                     stmt.execute("PRAGMA busy_timeout=3000;");
+                    stmt.execute("PRAGMA foreign_keys=ON;");
                 }
                 freeConnections.add(connection);
                 allConnections.add(connection);

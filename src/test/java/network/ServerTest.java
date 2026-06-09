@@ -40,6 +40,7 @@ class ServerTest {
         AtomicLong packetId = new AtomicLong(1);
         int threadsCount = 8;
         int messagesCount = 25;
+        int productId = 1;
         Thread[] threads = new Thread[threadsCount];
 
         for (int i = 0; i < threadsCount; i++) {
@@ -47,7 +48,7 @@ class ServerTest {
                 try {
                     for (int j = 0; j < messagesCount; j++) {
                         Package pack = new Package((byte) 1, packetId.getAndIncrement(),
-                                new Message(MessageType.ADD_PRODUCT, 1, "apple;1"));
+                                new Message(MessageType.ADD_PRODUCT, 1, productId + ";1"));
                         receiver.add(requestEncoder.encode(pack));
                     }
                 } catch (Exception e) {
@@ -72,7 +73,7 @@ class ServerTest {
             server.start();
             server.awaitStop();
 
-            assertEquals(threadsCount * messagesCount, storeService.getProductQuantity("apple"));
+            assertEquals(threadsCount * messagesCount, storeService.getProductQuantity(productId));
             assertEquals(threadsCount * messagesCount, sender.getSentData().size());
 
             for (byte[] data : sender.getSentData()) {
@@ -92,13 +93,16 @@ class ServerTest {
         TestNetworkSender sender = new TestNetworkSender();
         AtomicLong packetId = new AtomicLong(1);
 
-        addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT, "apple;50");
-        addMessage(receiver, requestEncoder, packetId, MessageType.TAKE_PRODUCT, "apple;20");
+        int productId = 1;
+        int groupId = 1;
+
+        addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT, productId + ";50");
+        addMessage(receiver, requestEncoder, packetId, MessageType.TAKE_PRODUCT, productId + ";20");
         addMessage(receiver, requestEncoder, packetId, MessageType.ADD_GROUP, "fruits");
-        addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT_TO_GROUP, "fruits;apple");
-        addMessage(receiver, requestEncoder, packetId, MessageType.SET_PRICE, "apple;12.5");
-        addMessage(receiver, requestEncoder, packetId, MessageType.GET_PRODUCT_COUNT, "apple");
-        addMessage(receiver, requestEncoder, packetId, MessageType.TAKE_PRODUCT, "apple;100");
+        addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT_TO_GROUP, groupId + ";" + productId);
+        addMessage(receiver, requestEncoder, packetId, MessageType.SET_PRICE, productId + ";12.5");
+        addMessage(receiver, requestEncoder, packetId, MessageType.GET_PRODUCT_COUNT, String.valueOf(productId));
+        addMessage(receiver, requestEncoder, packetId, MessageType.TAKE_PRODUCT, productId + ";100");
         addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT, "apple");
 
         try (SqliteProductService productDb = new SqliteProductService(tempDir.resolve("server2.db").toString())) {
@@ -127,9 +131,9 @@ class ServerTest {
             }
 
             assertEquals(8, sender.getSentData().size());
-            assertEquals(30, storeService.getProductQuantity("apple"));
-            assertTrue(storeService.isProductInGroup("fruits", "apple"));
-            assertEquals(12.5, storeService.getProductPrice("apple"));
+            assertEquals(30, storeService.getProductQuantity(productId));
+            assertTrue(storeService.isProductInGroup(groupId, productId));
+            assertEquals(12.5, storeService.getProductPrice(productId));
             assertEquals(6, okResponses);
             assertEquals(2, errorResponses);
         }
@@ -154,11 +158,11 @@ class ServerTest {
             addMessage(receiver, requestEncoder, packetId, MessageType.GET_PRODUCT, String.valueOf(productId));
             addMessage(receiver, requestEncoder, packetId, MessageType.UPDATE_PRODUCT,
                     productId + ";green apple;20;7.5");
-            addMessage(receiver, requestEncoder, packetId, MessageType.GET_PRODUCT_BY_NAME, "green apple");
+            addMessage(receiver, requestEncoder, packetId, MessageType.GET_PRODUCT, String.valueOf(productId));
             addMessage(receiver, requestEncoder, packetId, MessageType.CREATE_PRODUCT, "milk;30;3.0");
             addMessage(receiver, requestEncoder, packetId, MessageType.GET_ALL_PRODUCTS, "");
             addMessage(receiver, requestEncoder, packetId, MessageType.UPDATE_GROUP, groupId + ";fresh fruits");
-            addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT_TO_GROUP, "fresh fruits;green apple");
+            addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT_TO_GROUP, groupId + ";" + productId);
             addMessage(receiver, requestEncoder, packetId, MessageType.SEARCH_PRODUCTS,
                     "name=green;groups=fresh fruits;page=1;pageSize=10");
             addMessage(receiver, requestEncoder, packetId, MessageType.DELETE_PRODUCT, String.valueOf(productId));
@@ -237,13 +241,14 @@ class ServerTest {
         AtomicLong packetId = new AtomicLong(1);
         int threadsCount = 6;
         int messagesCount = 20;
+        int productId = 1;
         Thread[] threads = new Thread[threadsCount];
 
         for (int i = 0; i < threadsCount; i++) {
             threads[i] = new Thread(() -> {
                 try {
                     for (int j = 0; j < messagesCount; j++) {
-                        addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT, "apple;1");
+                        addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT, productId + ";1");
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -267,7 +272,7 @@ class ServerTest {
             server.start();
             server.awaitStop();
 
-            assertEquals(threadsCount * messagesCount, storeService.getProductQuantity("apple"));
+            assertEquals(threadsCount * messagesCount, storeService.getProductQuantity(productId));
             assertEquals(threadsCount * messagesCount, sender.getSentData().size());
 
             for (byte[] data : sender.getSentData()) {
