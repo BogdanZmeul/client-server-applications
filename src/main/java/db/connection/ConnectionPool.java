@@ -24,6 +24,11 @@ public class ConnectionPool implements AutoCloseable {
         try {
             for (int i = 0; i < poolSize; i++) {
                 Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbName);
+                try (java.sql.Statement stmt = connection.createStatement()) {
+                    stmt.execute("PRAGMA journal_mode=WAL;");
+                    stmt.execute("PRAGMA synchronous=NORMAL;");
+                    stmt.execute("PRAGMA busy_timeout=5000;");
+                }
                 freeConnections.add(connection);
                 allConnections.add(connection);
             }

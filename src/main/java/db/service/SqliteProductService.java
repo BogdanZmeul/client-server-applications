@@ -16,9 +16,6 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public class SqliteProductService implements ProductDatabase, AutoCloseable {
-    private static final int MAX_ATTEMPTS = 30;
-    private static final int RETRY_SLEEP_MILLIS = 50;
-
     public SqliteProductService(String dbName) {
         this(dbName, 5);
     }
@@ -213,59 +210,22 @@ public class SqliteProductService implements ProductDatabase, AutoCloseable {
     }
 
     private <T> T withProductTable(Function<ProductTable, T> operation) {
-        return withConnection(connection -> operation.apply(new ProductTable(connection)));
+        Connection connection = connectionPool.getConnection();
+
+        try {
+            return operation.apply(new ProductTable(connection));
+        } finally {
+            connectionPool.returnConnection(connection);
+        }
     }
 
     private <T> T withGroupTable(Function<GroupTable, T> operation) {
-        return withConnection(connection -> operation.apply(new GroupTable(connection)));
-    }
+        Connection connection = connectionPool.getConnection();
 
-    private <T> T withConnection(Function<Connection, T> operation) {
-        for (int i = 0; i < MAX_ATTEMPTS; i++) {
-            Connection connection = connectionPool.getConnection();
-            boolean needRetry = false;
-
-            try {
-                return operation.apply(connection);
-            } catch (RuntimeException e) {
-                if (!isDatabaseLocked(e) || i == MAX_ATTEMPTS - 1) {
-                    throw e;
-                }
-
-                needRetry = true;
-            } finally {
-                connectionPool.returnConnection(connection);
-            }
-
-            if (needRetry) {
-                sleepBeforeRetry();
-            }
-        }
-
-        throw new DatabaseException("Database is locked");
-    }
-
-    private boolean isDatabaseLocked(Throwable e) {
-        Throwable current = e;
-
-        while (current != null) {
-            String message = current.getMessage();
-            if (message != null && (message.contains("database is locked") || message.contains("SQLITE_BUSY"))) {
-                return true;
-            }
-
-            current = current.getCause();
-        }
-
-        return false;
-    }
-
-    private void sleepBeforeRetry() {
         try {
-            Thread.sleep(RETRY_SLEEP_MILLIS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new DatabaseException("Retry interrupted", e);
+            return operation.apply(new GroupTable(connection));
+        } finally {
+            connectionPool.returnConnection(connection);
         }
     }
 
