@@ -6,10 +6,10 @@ import java.util.Objects;
 public class ProductPage {
     private List<Product> products;
     private int totalCount;
-    private int page;
-    private int pageSize;
+    private Integer page;
+    private Integer pageSize;
 
-    public ProductPage(List<Product> products, int totalCount, int page, int pageSize) {
+    public ProductPage(List<Product> products, int totalCount, Integer page, Integer pageSize) {
         this.products = products;
         this.totalCount = totalCount;
         this.page = page;
@@ -32,19 +32,19 @@ public class ProductPage {
         this.totalCount = totalCount;
     }
 
-    public int getPage() {
+    public Integer getPage() {
         return page;
     }
 
-    public void setPage(int page) {
+    public void setPage(Integer page) {
         this.page = page;
     }
 
-    public int getPageSize() {
+    public Integer getPageSize() {
         return pageSize;
     }
 
-    public void setPageSize(int pageSize) {
+    public void setPageSize(Integer pageSize) {
         this.pageSize = pageSize;
     }
 
@@ -52,7 +52,7 @@ public class ProductPage {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ProductPage that = (ProductPage) o;
-        return totalCount == that.totalCount && page == that.page && pageSize == that.pageSize && Objects.equals(products, that.products);
+        return totalCount == that.totalCount && Objects.equals(page, that.page) && Objects.equals(pageSize, that.pageSize) && Objects.equals(products, that.products);
     }
 
     @Override

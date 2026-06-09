@@ -292,19 +292,11 @@ public class StoreService implements ProductService {
             }
         }
 
-        if (filter.page == null) {
-            filter.page = 1;
-        }
-
-        if (filter.pageSize == null) {
-            filter.pageSize = 10;
-        }
-
-        if (filter.page < 1) {
+        if (filter.page != null && filter.page < 1) {
             throw new StoreException("Page cannot be less than 1");
         }
 
-        if (filter.pageSize < 1) {
+        if (filter.pageSize != null && filter.pageSize < 1) {
             throw new StoreException("Page size cannot be less than 1");
         }
 

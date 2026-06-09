@@ -272,13 +272,14 @@ public class ProductTable {
                 LEFT JOIN product_group g ON p.group_id = g.id
                 """, filter);
 
-        query.sql.append("""
-                ORDER BY p.id
-                LIMIT ?
-                OFFSET ?
-                """);
-        query.params.add(filter.pageSize);
-        query.params.add((filter.page - 1) * filter.pageSize);
+        query.sql.append("ORDER BY p.id\n");
+
+        if (filter.page != null && filter.pageSize != null) {
+            query.sql.append("LIMIT ?\n");
+            query.sql.append("OFFSET ?\n");
+            query.params.add(filter.pageSize);
+            query.params.add((filter.page - 1) * filter.pageSize);
+        }
 
         return query;
     }
