@@ -24,7 +24,7 @@ public class StoreService implements ProductService {
         checkPrice(product.getPrice());
 
         if (productDb.getProduct(product.getName()).isPresent()) {
-            throw new RuntimeException("Product already exists");
+            throw new StoreException("Product already exists");
         }
 
         return productDb.createProduct(product);
@@ -66,12 +66,12 @@ public class StoreService implements ProductService {
         checkPrice(product.getPrice());
 
         if (product.getId() == null || productDb.getProduct(product.getId()).isEmpty()) {
-            throw new RuntimeException("Product not found");
+            throw new StoreException("Product not found");
         }
 
         Optional<Product> productWithSameName = productDb.getProduct(product.getName());
         if (productWithSameName.isPresent() && !productWithSameName.get().getId().equals(product.getId())) {
-            throw new RuntimeException("Product already exists");
+            throw new StoreException("Product already exists");
         }
 
         productDb.updateProduct(product);
@@ -145,7 +145,7 @@ public class StoreService implements ProductService {
         checkGroupName(group.getName());
 
         if (productDb.getGroup(group.getName()).isPresent()) {
-            throw new RuntimeException("Group already exists");
+            throw new StoreException("Group already exists");
         }
 
         return productDb.createGroup(group);
@@ -181,12 +181,12 @@ public class StoreService implements ProductService {
         checkGroupName(group.getName());
 
         if (group.getId() == null || productDb.getGroup(group.getId()).isEmpty()) {
-            throw new RuntimeException("Group not found");
+            throw new StoreException("Group not found");
         }
 
         Optional<ProductGroup> groupWithSameName = productDb.getGroup(group.getName());
         if (groupWithSameName.isPresent() && !groupWithSameName.get().getId().equals(group.getId())) {
-            throw new RuntimeException("Group already exists");
+            throw new StoreException("Group already exists");
         }
 
         productDb.updateGroup(group);
@@ -208,7 +208,7 @@ public class StoreService implements ProductService {
         checkProductExists(productId);
 
         if (productDb.isProductInGroup(groupId, productId)) {
-            throw new RuntimeException("Product already exists in group");
+            throw new StoreException("Product already exists in group");
         }
 
         productDb.addProductToGroup(groupId, productId);
@@ -250,19 +250,19 @@ public class StoreService implements ProductService {
 
     private void checkCount(int count) {
         if (count < 0) {
-            throw new RuntimeException("Count cannot be negative");
+            throw new StoreException("Count cannot be negative");
         }
     }
 
     private void checkPrice(double price) {
         if (price < 0) {
-            throw new RuntimeException("Price cannot be negative");
+            throw new StoreException("Price cannot be negative");
         }
     }
 
     private void checkFilter(Filter filter) {
         if (filter == null) {
-            throw new RuntimeException("Filter cannot be null");
+            throw new StoreException("Filter cannot be null");
         }
 
         if (filter.name != null && filter.name.isBlank()) {
@@ -290,11 +290,11 @@ public class StoreService implements ProductService {
         }
 
         if (filter.page < 1) {
-            throw new RuntimeException("Page cannot be less than 1");
+            throw new StoreException("Page cannot be less than 1");
         }
 
         if (filter.pageSize < 1) {
-            throw new RuntimeException("Page size cannot be less than 1");
+            throw new StoreException("Page size cannot be less than 1");
         }
 
         if (filter.minCount != null) {
@@ -306,7 +306,7 @@ public class StoreService implements ProductService {
         }
 
         if (filter.minCount != null && filter.maxCount != null && filter.minCount > filter.maxCount) {
-            throw new RuntimeException("Min count cannot be greater than max count");
+            throw new StoreException("Min count cannot be greater than max count");
         }
 
         if (filter.minPrice != null) {
@@ -318,32 +318,32 @@ public class StoreService implements ProductService {
         }
 
         if (filter.minPrice != null && filter.maxPrice != null && filter.minPrice > filter.maxPrice) {
-            throw new RuntimeException("Min price cannot be greater than max price");
+            throw new StoreException("Min price cannot be greater than max price");
         }
     }
 
     private void checkGroupName(String group) {
         if (group == null || group.isBlank()) {
-            throw new RuntimeException("Group name cannot be empty");
+            throw new StoreException("Group name cannot be empty");
         }
     }
 
     private void checkProductExists(int productId) {
         if (productDb.getProduct(productId).isEmpty()) {
-            throw new RuntimeException("Product not found");
+            throw new StoreException("Product not found");
         }
     }
 
     private void checkGroupExists(int groupId) {
         if (productDb.getGroup(groupId).isEmpty()) {
-            throw new RuntimeException("Group not found");
+            throw new StoreException("Group not found");
         }
     }
 
     private Product getProductOrThrow(int productId) {
         Optional<Product> foundProduct = productDb.getProduct(productId);
         if (foundProduct.isEmpty()) {
-            throw new RuntimeException("Product not found");
+            throw new StoreException("Product not found");
         }
 
         return foundProduct.get();
@@ -352,7 +352,7 @@ public class StoreService implements ProductService {
     private Product getProductOrThrow(String product) {
         Optional<Product> foundProduct = productDb.getProduct(product);
         if (foundProduct.isEmpty()) {
-            throw new RuntimeException("Product not found");
+            throw new StoreException("Product not found");
         }
 
         return foundProduct.get();
@@ -361,7 +361,7 @@ public class StoreService implements ProductService {
     private ProductGroup getGroupOrThrow(int id) {
         Optional<ProductGroup> foundGroup = productDb.getGroup(id);
         if (foundGroup.isEmpty()) {
-            throw new RuntimeException("Group not found");
+            throw new StoreException("Group not found");
         }
 
         return foundGroup.get();
@@ -370,7 +370,7 @@ public class StoreService implements ProductService {
     private ProductGroup getGroupOrThrow(String group) {
         Optional<ProductGroup> foundGroup = productDb.getGroup(group);
         if (foundGroup.isEmpty()) {
-            throw new RuntimeException("Group not found");
+            throw new StoreException("Group not found");
         }
 
         return foundGroup.get();

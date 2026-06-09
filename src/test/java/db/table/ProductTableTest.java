@@ -1,5 +1,6 @@
 package db.table;
 
+import db.DatabaseException;
 import db.model.Filter;
 import db.model.Product;
 import db.model.ProductGroup;
@@ -145,15 +146,15 @@ class ProductTableTest {
     void shouldThrowErrorWhenProductChangesAreNotApplied() {
         int productId = productTable.createProduct(new Product("apple", 10, 5.5));
 
-        RuntimeException updateError = assertThrows(RuntimeException.class,
+        DatabaseException updateError = assertThrows(DatabaseException.class,
                 () -> productTable.updateProduct(new Product(100, "milk", 10, 5)));
-        RuntimeException deleteError = assertThrows(RuntimeException.class,
+        DatabaseException deleteError = assertThrows(DatabaseException.class,
                 () -> productTable.deleteProduct(100));
-        RuntimeException addCountError = assertThrows(RuntimeException.class,
+        DatabaseException addCountError = assertThrows(DatabaseException.class,
                 () -> productTable.addProductQuantity(100, 1));
-        RuntimeException takeCountError = assertThrows(RuntimeException.class,
+        DatabaseException takeCountError = assertThrows(DatabaseException.class,
                 () -> productTable.takeProductQuantity(productId, 100));
-        RuntimeException priceError = assertThrows(RuntimeException.class,
+        DatabaseException priceError = assertThrows(DatabaseException.class,
                 () -> productTable.setProductPrice(100, 10));
 
         assertEquals("Changes to product have not been applied", updateError.getMessage());
@@ -165,9 +166,9 @@ class ProductTableTest {
 
     @Test
     void shouldThrowErrorWhenProductQuantityOrPriceDoesNotExist() {
-        RuntimeException countError = assertThrows(RuntimeException.class,
+        DatabaseException countError = assertThrows(DatabaseException.class,
                 () -> productTable.getProductQuantity(100));
-        RuntimeException priceError = assertThrows(RuntimeException.class,
+        DatabaseException priceError = assertThrows(DatabaseException.class,
                 () -> productTable.getProductPrice(100));
 
         assertEquals("Product not found", countError.getMessage());
@@ -178,7 +179,7 @@ class ProductTableTest {
     void shouldRejectDuplicateProductNameOnDatabaseLevel() {
         productTable.createProduct(new Product("apple", 10, 5.5));
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        DatabaseException error = assertThrows(DatabaseException.class,
                 () -> productTable.createProduct(new Product("apple", 20, 7.0)));
 
         assertTrue(error.getMessage().contains("Can't create product"));

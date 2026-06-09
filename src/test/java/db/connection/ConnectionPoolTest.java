@@ -1,5 +1,6 @@
 package db.connection;
 
+import db.DatabaseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -60,7 +61,7 @@ class ConnectionPoolTest {
 
     @Test
     void shouldThrowErrorWhenPoolSizeIsWrong() {
-        RuntimeException error = assertThrows(RuntimeException.class,
+        DatabaseException error = assertThrows(DatabaseException.class,
                 () -> new ConnectionPool(tempDir.resolve("pool3.db").toString(), 0));
 
         assertEquals("Pool size cannot be less than 1", error.getMessage());

@@ -1,5 +1,6 @@
 package db.service;
 
+import db.DatabaseException;
 import db.connection.ConnectionPool;
 import db.model.Filter;
 import db.model.Product;
@@ -205,7 +206,7 @@ public class SqliteProductService implements ProductDatabase, AutoCloseable {
                     )
                     """);
         } catch (SQLException e) {
-            throw new RuntimeException("Exception while DB init", e);
+            throw new DatabaseException("Exception while DB init", e);
         } finally {
             connectionPool.returnConnection(connection);
         }
@@ -241,7 +242,7 @@ public class SqliteProductService implements ProductDatabase, AutoCloseable {
             }
         }
 
-        throw new RuntimeException("Database is locked");
+        throw new DatabaseException("Database is locked");
     }
 
     private boolean isDatabaseLocked(Throwable e) {
@@ -264,7 +265,7 @@ public class SqliteProductService implements ProductDatabase, AutoCloseable {
             Thread.sleep(RETRY_SLEEP_MILLIS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Retry interrupted", e);
+            throw new DatabaseException("Retry interrupted", e);
         }
     }
 

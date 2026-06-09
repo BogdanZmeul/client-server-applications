@@ -1,5 +1,6 @@
 package db.table;
 
+import db.DatabaseException;
 import db.model.Filter;
 import db.model.Product;
 
@@ -32,7 +33,7 @@ public class ProductTable {
 
             int inserted = ps.executeUpdate();
             if (inserted < 1) {
-                throw new RuntimeException("Insert failed");
+                throw new DatabaseException("Insert failed");
             }
 
             try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
@@ -41,9 +42,9 @@ public class ProductTable {
                 }
             }
 
-            throw new RuntimeException("Can't get product id");
+            throw new DatabaseException("Can't get product id");
         } catch (SQLException e) {
-            throw new RuntimeException("Can't create product: " + product, e);
+            throw new DatabaseException("Can't create product: " + product, e);
         }
     }
 
@@ -57,7 +58,7 @@ public class ProductTable {
 
             return 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't count products", e);
+            throw new DatabaseException("Can't count products", e);
         }
     }
 
@@ -73,7 +74,7 @@ public class ProductTable {
 
             return products;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't read products", e);
+            throw new DatabaseException("Can't read products", e);
         }
     }
 
@@ -92,7 +93,7 @@ public class ProductTable {
 
             return products;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't search products", e);
+            throw new DatabaseException("Can't search products", e);
         }
     }
 
@@ -110,7 +111,7 @@ public class ProductTable {
 
             return 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't count filtered products", e);
+            throw new DatabaseException("Can't count filtered products", e);
         }
     }
 
@@ -126,7 +127,7 @@ public class ProductTable {
 
             return Optional.empty();
         } catch (SQLException e) {
-            throw new RuntimeException("Can't read product by id: " + id, e);
+            throw new DatabaseException("Can't read product by id: " + id, e);
         }
     }
 
@@ -142,7 +143,7 @@ public class ProductTable {
 
             return Optional.empty();
         } catch (SQLException e) {
-            throw new RuntimeException("Can't read product by name: " + name, e);
+            throw new DatabaseException("Can't read product by name: " + name, e);
         }
     }
 
@@ -156,10 +157,10 @@ public class ProductTable {
 
             int updated = ps.executeUpdate();
             if (updated < 1) {
-                throw new RuntimeException("Changes to product have not been applied");
+                throw new DatabaseException("Changes to product have not been applied");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't update product: " + product, e);
+            throw new DatabaseException("Can't update product: " + product, e);
         }
     }
 
@@ -169,10 +170,10 @@ public class ProductTable {
 
             int deleted = ps.executeUpdate();
             if (deleted < 1) {
-                throw new RuntimeException("Changes to product have not been applied");
+                throw new DatabaseException("Changes to product have not been applied");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't delete product by id: " + id, e);
+            throw new DatabaseException("Can't delete product by id: " + id, e);
         }
     }
 
@@ -180,7 +181,7 @@ public class ProductTable {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product")) {
             return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Can't delete products", e);
+            throw new DatabaseException("Can't delete products", e);
         }
     }
 
@@ -194,9 +195,9 @@ public class ProductTable {
                 }
             }
 
-            throw new RuntimeException("Product not found");
+            throw new DatabaseException("Product not found");
         } catch (SQLException e) {
-            throw new RuntimeException("Can't get product count by id: " + productId, e);
+            throw new DatabaseException("Can't get product count by id: " + productId, e);
         }
     }
 
@@ -207,10 +208,10 @@ public class ProductTable {
 
             int updated = ps.executeUpdate();
             if (updated < 1) {
-                throw new RuntimeException("Changes to product have not been applied");
+                throw new DatabaseException("Changes to product have not been applied");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't add product count: " + productId, e);
+            throw new DatabaseException("Can't add product count: " + productId, e);
         }
     }
 
@@ -223,10 +224,10 @@ public class ProductTable {
 
             int updated = ps.executeUpdate();
             if (updated < 1) {
-                throw new RuntimeException("Changes to product have not been applied");
+                throw new DatabaseException("Changes to product have not been applied");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't take product count: " + productId, e);
+            throw new DatabaseException("Can't take product count: " + productId, e);
         }
     }
 
@@ -237,10 +238,10 @@ public class ProductTable {
 
             int updated = ps.executeUpdate();
             if (updated < 1) {
-                throw new RuntimeException("Changes to product have not been applied");
+                throw new DatabaseException("Changes to product have not been applied");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't set price for product: " + productId, e);
+            throw new DatabaseException("Can't set price for product: " + productId, e);
         }
     }
 
@@ -254,9 +255,9 @@ public class ProductTable {
                 }
             }
 
-            throw new RuntimeException("Product not found");
+            throw new DatabaseException("Product not found");
         } catch (SQLException e) {
-            throw new RuntimeException("Can't get product price by id: " + productId, e);
+            throw new DatabaseException("Can't get product price by id: " + productId, e);
         }
     }
 

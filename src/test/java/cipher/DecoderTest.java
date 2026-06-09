@@ -43,34 +43,44 @@ class DecoderTest {
 
     @Test
     void shouldDecodeThrowsExceptionWhenDataIsNull() {
-        assertThrows(RuntimeException.class, () -> decoder.decode(null));
+        DecoderException error = assertThrows(DecoderException.class, () -> decoder.decode(null));
+
+        assertEquals("Invalid data", error.getMessage());
     }
 
     @Test
     void shouldDecodeThrowsExceptionWhenDataIsTooShort() {
         byte[] shortData = new byte[10];
 
-        assertThrows(RuntimeException.class, () -> decoder.decode(shortData));
+        DecoderException error = assertThrows(DecoderException.class, () -> decoder.decode(shortData));
+
+        assertEquals("Invalid data", error.getMessage());
     }
 
     @Test
     void shouldDecodeThrowsExceptionWhenMagicByteIsInvalid() {
         validPacket[0] = 0x00;
 
-        assertThrows(RuntimeException.class, () -> decoder.decode(validPacket));
+        DecoderException error = assertThrows(DecoderException.class, () -> decoder.decode(validPacket));
+
+        assertEquals("Invalid bMagic byte", error.getMessage());
     }
 
     @Test
     void shouldDecodeThrowsExceptionWhenHeaderCrcIsInvalid() {
         validPacket[1] = 0x05;
 
-        assertThrows(RuntimeException.class, () -> decoder.decode(validPacket));
+        DecoderException error = assertThrows(DecoderException.class, () -> decoder.decode(validPacket));
+
+        assertEquals("Header CRC16 error", error.getMessage());
     }
 
     @Test
     void shouldDecodeThrowsExceptionWhenMessageCrcIsInvalid() {
         validPacket[16] = 0x01;
 
-        assertThrows(RuntimeException.class, () -> decoder.decode(validPacket));
+        DecoderException error = assertThrows(DecoderException.class, () -> decoder.decode(validPacket));
+
+        assertEquals("Message CRC16 error", error.getMessage());
     }
 }

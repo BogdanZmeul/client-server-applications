@@ -4,6 +4,7 @@ import db.model.Filter;
 import db.model.Product;
 import db.model.ProductGroup;
 import db.model.ProductPage;
+import db.DatabaseException;
 import db.service.SqliteProductService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +38,7 @@ class StoreServiceTest {
     void shouldRejectDuplicateProduct() {
         storeService.createProduct(new Product("apple", 10, 5));
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.createProduct(new Product("apple", 20, 7)));
 
         assertEquals("Product already exists", error.getMessage());
@@ -48,7 +49,7 @@ class StoreServiceTest {
     void shouldRejectDuplicateGroup() {
         storeService.createGroup("fruits");
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.createGroup("fruits"));
 
         assertEquals("Group already exists", error.getMessage());
@@ -57,9 +58,9 @@ class StoreServiceTest {
 
     @Test
     void shouldRejectWrongProductValues() {
-        RuntimeException countError = assertThrows(RuntimeException.class,
+        StoreException countError = assertThrows(StoreException.class,
                 () -> storeService.createProduct(new Product("apple", -1, 5)));
-        RuntimeException priceError = assertThrows(RuntimeException.class,
+        StoreException priceError = assertThrows(StoreException.class,
                 () -> storeService.createProduct(new Product("milk", 1, -5)));
 
         assertEquals("Count cannot be negative", countError.getMessage());
@@ -72,7 +73,7 @@ class StoreServiceTest {
         int appleId = storeService.createProduct(new Product("apple", 10, 5));
         storeService.createProduct(new Product("milk", 20, 3));
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.updateProduct(new Product(appleId, "milk", 30, 4)));
 
         assertEquals("Product already exists", error.getMessage());
@@ -84,7 +85,7 @@ class StoreServiceTest {
         int fruitsId = storeService.createGroup(new ProductGroup("fruits"));
         storeService.createGroup("drinks");
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.updateGroup(new ProductGroup(fruitsId, "drinks")));
 
         assertEquals("Group already exists", error.getMessage());
@@ -97,7 +98,7 @@ class StoreServiceTest {
         int groupId = storeService.createGroup(new ProductGroup("fruits"));
         storeService.addProductToGroup(groupId, productId);
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        DatabaseException error = assertThrows(DatabaseException.class,
                 () -> storeService.deleteGroup(groupId));
 
         assertEquals("Changes to group have not been applied", error.getMessage());
@@ -108,7 +109,7 @@ class StoreServiceTest {
     void shouldRejectAddingProductToWrongGroup() {
         int productId = storeService.createProduct(new Product("apple", 10, 5));
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.addProductToGroup(100, productId));
 
         assertEquals("Group not found", error.getMessage());
@@ -118,7 +119,7 @@ class StoreServiceTest {
     void shouldRejectAddingWrongProductToGroup() {
         int groupId = storeService.createGroup(new ProductGroup("fruits"));
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.addProductToGroup(groupId, 100));
 
         assertEquals("Product not found", error.getMessage());
@@ -130,7 +131,7 @@ class StoreServiceTest {
         int groupId = storeService.createGroup(new ProductGroup("fruits"));
         storeService.addProductToGroup(groupId, productId);
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.addProductToGroup(groupId, productId));
 
         assertEquals("Product already exists in group", error.getMessage());
@@ -142,7 +143,7 @@ class StoreServiceTest {
         filter.minCount = 10;
         filter.maxCount = 5;
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        StoreException error = assertThrows(StoreException.class,
                 () -> storeService.searchProducts(filter));
 
         assertEquals("Min count cannot be greater than max count", error.getMessage());

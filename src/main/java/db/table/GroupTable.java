@@ -1,5 +1,6 @@
 package db.table;
 
+import db.DatabaseException;
 import db.model.ProductGroup;
 
 import java.sql.Connection;
@@ -26,7 +27,7 @@ public class GroupTable {
 
             int inserted = ps.executeUpdate();
             if (inserted < 1) {
-                throw new RuntimeException("Insert failed");
+                throw new DatabaseException("Insert failed");
             }
 
             try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
@@ -35,9 +36,9 @@ public class GroupTable {
                 }
             }
 
-            throw new RuntimeException("Can't get group id");
+            throw new DatabaseException("Can't get group id");
         } catch (SQLException e) {
-            throw new RuntimeException("Can't add group: " + group, e);
+            throw new DatabaseException("Can't add group: " + group, e);
         }
     }
 
@@ -51,7 +52,7 @@ public class GroupTable {
 
             return 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't count groups", e);
+            throw new DatabaseException("Can't count groups", e);
         }
     }
 
@@ -67,7 +68,7 @@ public class GroupTable {
 
             return groups;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't read groups", e);
+            throw new DatabaseException("Can't read groups", e);
         }
     }
 
@@ -83,7 +84,7 @@ public class GroupTable {
 
             return Optional.empty();
         } catch (SQLException e) {
-            throw new RuntimeException("Can't read group by id: " + id, e);
+            throw new DatabaseException("Can't read group by id: " + id, e);
         }
     }
 
@@ -99,7 +100,7 @@ public class GroupTable {
 
             return Optional.empty();
         } catch (SQLException e) {
-            throw new RuntimeException("Can't read group by name: " + name, e);
+            throw new DatabaseException("Can't read group by name: " + name, e);
         }
     }
 
@@ -110,10 +111,10 @@ public class GroupTable {
 
             int updated = ps.executeUpdate();
             if (updated < 1) {
-                throw new RuntimeException("Changes to group have not been applied");
+                throw new DatabaseException("Changes to group have not been applied");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't update group: " + group, e);
+            throw new DatabaseException("Can't update group: " + group, e);
         }
     }
 
@@ -131,10 +132,10 @@ public class GroupTable {
 
             int deleted = ps.executeUpdate();
             if (deleted < 1) {
-                throw new RuntimeException("Changes to group have not been applied");
+                throw new DatabaseException("Changes to group have not been applied");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't delete group by id: " + id, e);
+            throw new DatabaseException("Can't delete group by id: " + id, e);
         }
     }
 
@@ -147,10 +148,10 @@ public class GroupTable {
 
             int updated = ps.executeUpdate();
             if (updated < 1) {
-                throw new RuntimeException("Changes to group have not been applied");
+                throw new DatabaseException("Changes to group have not been applied");
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't add product to group", e);
+            throw new DatabaseException("Can't add product to group", e);
         }
     }
 
@@ -170,7 +171,7 @@ public class GroupTable {
 
             return false;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't check group products: " + groupId, e);
+            throw new DatabaseException("Can't check group products: " + groupId, e);
         }
     }
 
@@ -191,7 +192,7 @@ public class GroupTable {
 
             return false;
         } catch (SQLException e) {
-            throw new RuntimeException("Can't check product group", e);
+            throw new DatabaseException("Can't check product group", e);
         }
     }
 

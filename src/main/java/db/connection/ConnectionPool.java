@@ -1,5 +1,7 @@
 package db.connection;
 
+import db.DatabaseException;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -14,7 +16,7 @@ public class ConnectionPool implements AutoCloseable {
 
     public ConnectionPool(String dbName, int poolSize) {
         if (poolSize < 1) {
-            throw new RuntimeException("Pool size cannot be less than 1");
+            throw new DatabaseException("Pool size cannot be less than 1");
         }
 
         freeConnections = new ArrayBlockingQueue<>(poolSize);
@@ -26,7 +28,7 @@ public class ConnectionPool implements AutoCloseable {
                 allConnections.add(connection);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Can't create SQLite connection pool", e);
+            throw new DatabaseException("Can't create SQLite connection pool", e);
         }
     }
 
@@ -35,7 +37,7 @@ public class ConnectionPool implements AutoCloseable {
             return freeConnections.take();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Can't get connection from pool", e);
+            throw new DatabaseException("Can't get connection from pool", e);
         }
     }
 
@@ -51,7 +53,7 @@ public class ConnectionPool implements AutoCloseable {
             try {
                 connection.close();
             } catch (SQLException e) {
-                throw new RuntimeException("Can't close SQLite DB", e);
+                throw new DatabaseException("Can't close SQLite DB", e);
             }
         }
     }

@@ -1,5 +1,6 @@
 package db.table;
 
+import db.DatabaseException;
 import db.model.Product;
 import db.model.ProductGroup;
 import org.junit.jupiter.api.AfterEach;
@@ -89,7 +90,7 @@ class GroupTableTest {
         int groupId = groupTable.createGroup(new ProductGroup("fruits"));
         groupTable.addProductToGroup(groupId, productId);
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        DatabaseException error = assertThrows(DatabaseException.class,
                 () -> groupTable.deleteGroup(groupId));
 
         assertEquals("Changes to group have not been applied", error.getMessage());
@@ -100,13 +101,13 @@ class GroupTableTest {
     void shouldThrowErrorWhenGroupChangesAreNotApplied() {
         int productId = productTable.createProduct(new Product("apple", 10, 5.5));
 
-        RuntimeException updateError = assertThrows(RuntimeException.class,
+        DatabaseException updateError = assertThrows(DatabaseException.class,
                 () -> groupTable.updateGroup(new ProductGroup(100, "fruits")));
-        RuntimeException deleteError = assertThrows(RuntimeException.class,
+        DatabaseException deleteError = assertThrows(DatabaseException.class,
                 () -> groupTable.deleteGroup(100));
-        RuntimeException wrongGroupError = assertThrows(RuntimeException.class,
+        DatabaseException wrongGroupError = assertThrows(DatabaseException.class,
                 () -> groupTable.addProductToGroup(100, productId));
-        RuntimeException wrongProductError = assertThrows(RuntimeException.class,
+        DatabaseException wrongProductError = assertThrows(DatabaseException.class,
                 () -> groupTable.addProductToGroup(groupTable.createGroup(new ProductGroup("fruits")), 100));
 
         assertEquals("Changes to group have not been applied", updateError.getMessage());
@@ -119,7 +120,7 @@ class GroupTableTest {
     void shouldRejectDuplicateGroupNameOnDatabaseLevel() {
         groupTable.createGroup(new ProductGroup("fruits"));
 
-        RuntimeException error = assertThrows(RuntimeException.class,
+        DatabaseException error = assertThrows(DatabaseException.class,
                 () -> groupTable.createGroup(new ProductGroup("fruits")));
 
         assertTrue(error.getMessage().contains("Can't add group"));
