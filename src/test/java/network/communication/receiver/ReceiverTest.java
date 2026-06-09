@@ -1,4 +1,5 @@
-import network.communication.receiver.Receiver;
+package network.communication.receiver;
+
 import network.protocol.NetworkReceiver;
 import org.junit.jupiter.api.Test;
 

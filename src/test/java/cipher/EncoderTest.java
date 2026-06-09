@@ -1,4 +1,5 @@
-import cipher.Encoder;
+package cipher;
+
 import data.Message;
 import data.Package;
 import org.junit.jupiter.api.BeforeEach;

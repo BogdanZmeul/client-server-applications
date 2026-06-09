@@ -1,4 +1,5 @@
-import network.communication.sender.Sender;
+package network.communication.sender;
+
 import network.protocol.NetworkSender;
 import org.junit.jupiter.api.Test;
 

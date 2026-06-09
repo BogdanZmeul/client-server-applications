@@ -1,8 +1,9 @@
+package network.security;
+
 import cipher.Decoder;
 import cipher.Encoder;
 import data.Message;
 import data.Package;
-import network.security.Decriptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import utils.MessageType;
@@ -33,7 +34,7 @@ class DecriptorTest {
         byte[] endPacket = new byte[0];
         BlockingQueue<byte[]> input = new LinkedBlockingQueue<>();
         BlockingQueue<Package> output = new LinkedBlockingQueue<>();
-        Package pack = new Package((byte) 1, 10, new Message(MessageType.ADD_PRODUCT, 1, "apple;5"));
+        Package pack = new Package((byte) 1, 10, new Message(MessageType.ADD_PRODUCT, 1, "1;5"));
 
         input.add(encoder.encode(pack));
         input.add(endPacket);
@@ -46,7 +47,7 @@ class DecriptorTest {
         assertNotNull(actual);
         assertEquals(10, actual.getbPktId());
         assertEquals(MessageType.ADD_PRODUCT, actual.getMessage().getcType());
-        assertEquals("apple;5", actual.getMessage().getMessage());
+        assertEquals("1;5", actual.getMessage().getMessage());
     }
 
     @Test
@@ -68,7 +69,7 @@ class DecriptorTest {
         byte[] endPacket = new byte[0];
         BlockingQueue<byte[]> input = new LinkedBlockingQueue<>();
         BlockingQueue<Package> output = new LinkedBlockingQueue<>();
-        Package firstPackage = new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "apple;5"));
+        Package firstPackage = new Package((byte) 1, 1, new Message(MessageType.ADD_PRODUCT, 1, "1;5"));
         Package secondPackage = new Package((byte) 1, 2, new Message(MessageType.ADD_GROUP, 1, "fruits"));
 
         input.add(encoder.encode(firstPackage));
@@ -85,7 +86,7 @@ class DecriptorTest {
 
         assertNotNull(firstActual);
         assertNotNull(secondActual);
-        assertEquals("apple;5", firstActual.getMessage().getMessage());
+        assertEquals("1;5", firstActual.getMessage().getMessage());
         assertEquals("fruits", secondActual.getMessage().getMessage());
     }
 }

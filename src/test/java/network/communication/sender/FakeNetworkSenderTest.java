@@ -1,3 +1,5 @@
+package network.communication.sender;
+
 import network.communication.sender.FakeNetworkSender;
 import org.junit.jupiter.api.Test;
 

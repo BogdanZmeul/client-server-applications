@@ -38,12 +38,12 @@ public class FakeNetworkReceiver implements NetworkReceiver {
 
     private String createMessage(int type) {
         return switch (type) {
-            case MessageType.GET_PRODUCT_COUNT -> "bananas";
-            case MessageType.TAKE_PRODUCT -> "bananas;1";
-            case MessageType.ADD_PRODUCT -> "bananas;2";
+            case MessageType.GET_PRODUCT_COUNT -> "1";
+            case MessageType.TAKE_PRODUCT -> "1;1";
+            case MessageType.ADD_PRODUCT -> "1;2";
             case MessageType.ADD_GROUP -> "fruit";
-            case MessageType.ADD_PRODUCT_TO_GROUP -> "fruit;bananas";
-            case MessageType.SET_PRICE -> "bananas;71.5";
+            case MessageType.ADD_PRODUCT_TO_GROUP -> "1;1";
+            case MessageType.SET_PRICE -> "1;71.5";
             default -> "";
         };
     }
