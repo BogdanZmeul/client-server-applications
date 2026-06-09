@@ -151,7 +151,10 @@ class ProductTable {
             ps.setDouble(3, product.getPrice());
             ps.setInt(4, product.getId());
 
-            ps.executeUpdate();
+            int updated = ps.executeUpdate();
+            if (updated < 1) {
+                throw new RuntimeException("Changes to product have not been applied");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Can't update product: " + product, e);
         }
@@ -160,7 +163,11 @@ class ProductTable {
     void deleteProduct(int id) {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product WHERE id = ?")) {
             ps.setInt(1, id);
-            ps.executeUpdate();
+
+            int deleted = ps.executeUpdate();
+            if (deleted < 1) {
+                throw new RuntimeException("Changes to product have not been applied");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Can't delete product by id: " + id, e);
         }
@@ -184,7 +191,7 @@ class ProductTable {
                 }
             }
 
-            return 0;
+            throw new RuntimeException("Product not found");
         } catch (SQLException e) {
             throw new RuntimeException("Can't get product count by id: " + productId, e);
         }
@@ -194,17 +201,27 @@ class ProductTable {
         try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count + ? WHERE id = ?")) {
             ps.setInt(1, count);
             ps.setInt(2, productId);
-            ps.executeUpdate();
+
+            int updated = ps.executeUpdate();
+            if (updated < 1) {
+                throw new RuntimeException("Changes to product have not been applied");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Can't add product count: " + productId, e);
         }
     }
 
     void takeProductQuantity(int productId, int count) {
-        try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count - ? WHERE id = ?")) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE product SET count = count - ? WHERE id = ? AND count >= ?")) {
             ps.setInt(1, count);
             ps.setInt(2, productId);
-            ps.executeUpdate();
+            ps.setInt(3, count);
+
+            int updated = ps.executeUpdate();
+            if (updated < 1) {
+                throw new RuntimeException("Changes to product have not been applied");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Can't take product count: " + productId, e);
         }
@@ -214,7 +231,11 @@ class ProductTable {
         try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET price = ? WHERE id = ?")) {
             ps.setDouble(1, price);
             ps.setInt(2, productId);
-            ps.executeUpdate();
+
+            int updated = ps.executeUpdate();
+            if (updated < 1) {
+                throw new RuntimeException("Changes to product have not been applied");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Can't set price for product: " + productId, e);
         }
@@ -230,7 +251,7 @@ class ProductTable {
                 }
             }
 
-            return 0;
+            throw new RuntimeException("Product not found");
         } catch (SQLException e) {
             throw new RuntimeException("Can't get product price by id: " + productId, e);
         }

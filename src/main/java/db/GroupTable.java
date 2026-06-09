@@ -106,16 +106,31 @@ class GroupTable {
             ps.setString(1, group.getName());
             ps.setInt(2, group.getId());
 
-            ps.executeUpdate();
+            int updated = ps.executeUpdate();
+            if (updated < 1) {
+                throw new RuntimeException("Changes to group have not been applied");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Can't update group: " + group, e);
         }
     }
 
     void deleteGroup(int id) {
-        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product_group WHERE id = ?")) {
+        try (PreparedStatement ps = connection.prepareStatement("""
+                DELETE FROM product_group
+                WHERE id = ? AND NOT EXISTS (
+                    SELECT 1
+                    FROM product
+                    WHERE group_id = ?
+                )
+                """)) {
             ps.setInt(1, id);
-            ps.executeUpdate();
+            ps.setInt(2, id);
+
+            int deleted = ps.executeUpdate();
+            if (deleted < 1) {
+                throw new RuntimeException("Changes to group have not been applied");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Can't delete group by id: " + id, e);
         }
@@ -123,10 +138,15 @@ class GroupTable {
 
     void addProductToGroup(int groupId, int productId) {
         try (PreparedStatement ps = connection.prepareStatement(
-                "UPDATE product SET group_id = ? WHERE id = ?")) {
+                "UPDATE product SET group_id = ? WHERE id = ? AND EXISTS (SELECT 1 FROM product_group WHERE id = ?)")) {
             ps.setInt(1, groupId);
             ps.setInt(2, productId);
-            ps.executeUpdate();
+            ps.setInt(3, groupId);
+
+            int updated = ps.executeUpdate();
+            if (updated < 1) {
+                throw new RuntimeException("Changes to group have not been applied");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Can't add product to group", e);
         }

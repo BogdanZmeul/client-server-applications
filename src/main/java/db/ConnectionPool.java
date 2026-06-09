@@ -1,0 +1,58 @@
+package db;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+class ConnectionPool implements AutoCloseable {
+    private final BlockingQueue<Connection> freeConnections;
+    private final List<Connection> allConnections = new ArrayList<>();
+
+    ConnectionPool(String dbName, int poolSize) {
+        if (poolSize < 1) {
+            throw new RuntimeException("Pool size cannot be less than 1");
+        }
+
+        freeConnections = new ArrayBlockingQueue<>(poolSize);
+
+        try {
+            for (int i = 0; i < poolSize; i++) {
+                Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbName);
+                freeConnections.add(connection);
+                allConnections.add(connection);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't create SQLite connection pool", e);
+        }
+    }
+
+    Connection getConnection() {
+        try {
+            return freeConnections.take();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Can't get connection from pool", e);
+        }
+    }
+
+    void returnConnection(Connection connection) {
+        if (connection != null) {
+            freeConnections.add(connection);
+        }
+    }
+
+    @Override
+    public void close() {
+        for (Connection connection : allConnections) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new RuntimeException("Can't close SQLite DB", e);
+            }
+        }
+    }
+}

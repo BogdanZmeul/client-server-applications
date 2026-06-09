@@ -19,7 +19,7 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public synchronized int createProduct(Product product) {
+    public int createProduct(Product product) {
         checkCount(product.getCount());
         checkPrice(product.getPrice());
 
@@ -31,17 +31,17 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public synchronized int getProductsCount() {
+    public int getProductsCount() {
         return productDb.getProductsCount();
     }
 
     @Override
-    public synchronized List<Product> getAllProducts() {
+    public List<Product> getAllProducts() {
         return productDb.getAllProducts();
     }
 
     @Override
-    public synchronized ProductPage searchProducts(Filter filter) {
+    public ProductPage searchProducts(Filter filter) {
         checkFilter(filter);
 
         List<Product> products = productDb.searchProducts(filter);
@@ -51,17 +51,17 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public synchronized Optional<Product> getProduct(int id) {
+    public Optional<Product> getProduct(int id) {
         return productDb.getProduct(id);
     }
 
     @Override
-    public synchronized Optional<Product> getProduct(String name) {
+    public Optional<Product> getProduct(String name) {
         return productDb.getProduct(name);
     }
 
     @Override
-    public synchronized void updateProduct(Product product) {
+    public void updateProduct(Product product) {
         checkCount(product.getCount());
         checkPrice(product.getPrice());
 
@@ -78,83 +78,70 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public synchronized void deleteProduct(int id) {
-        checkProductExists(id);
+    public void deleteProduct(int id) {
         productDb.deleteProduct(id);
     }
 
     @Override
-    public synchronized int deleteAllProducts() {
+    public int deleteAllProducts() {
         return productDb.deleteAllProducts();
     }
 
     @Override
-    public synchronized int getProductQuantity(int productId) {
-        checkProductExists(productId);
+    public int getProductQuantity(int productId) {
         return productDb.getProductQuantity(productId);
     }
 
     @Override
-    public synchronized int getProductQuantity(String product) {
+    public int getProductQuantity(String product) {
         return getProductQuantity(getProductOrThrow(product).getId());
     }
 
     @Override
-    public synchronized void takeProductQuantity(int productId, int count) {
+    public void takeProductQuantity(int productId, int count) {
         checkCount(count);
-
-        Product product = getProductOrThrow(productId);
-        if (product.getCount() < count) {
-            throw new RuntimeException("Not enough product");
-        }
-
         productDb.takeProductQuantity(productId, count);
     }
 
     @Override
-    public synchronized void takeProductQuantity(String product, int count) {
+    public void takeProductQuantity(String product, int count) {
         takeProductQuantity(getProductOrThrow(product).getId(), count);
     }
 
     @Override
-    public synchronized void addProductQuantity(int productId, int count) {
+    public void addProductQuantity(int productId, int count) {
         checkCount(count);
-        checkProductExists(productId);
-
         productDb.addProductQuantity(productId, count);
     }
 
     @Override
-    public synchronized void addProductQuantity(String product, int count) {
+    public void addProductQuantity(String product, int count) {
         addProductQuantity(getProductOrThrow(product).getId(), count);
     }
 
     @Override
-    public synchronized void setProductPrice(int productId, double price) {
+    public void setProductPrice(int productId, double price) {
         checkPrice(price);
-        checkProductExists(productId);
-
         productDb.setProductPrice(productId, price);
     }
 
     @Override
-    public synchronized void setProductPrice(String product, double price) {
+    public void setProductPrice(String product, double price) {
         setProductPrice(getProductOrThrow(product).getId(), price);
     }
 
     @Override
-    public synchronized double getProductPrice(int productId) {
-        checkProductExists(productId);
+    public double getProductPrice(int productId) {
         return productDb.getProductPrice(productId);
     }
 
     @Override
-    public synchronized double getProductPrice(String product) {
+    public double getProductPrice(String product) {
         return getProductPrice(getProductOrThrow(product).getId());
     }
 
     @Override
-    public synchronized int createGroup(ProductGroup group) {
+    public int createGroup(ProductGroup group) {
         checkGroupName(group.getName());
 
         if (productDb.getGroup(group.getName()).isPresent()) {
@@ -165,32 +152,32 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public synchronized void createGroup(String group) {
+    public void createGroup(String group) {
         createGroup(new ProductGroup(group));
     }
 
     @Override
-    public synchronized int getGroupsCount() {
+    public int getGroupsCount() {
         return productDb.getGroupsCount();
     }
 
     @Override
-    public synchronized List<ProductGroup> getAllGroups() {
+    public List<ProductGroup> getAllGroups() {
         return productDb.getAllGroups();
     }
 
     @Override
-    public synchronized Optional<ProductGroup> getGroup(int id) {
+    public Optional<ProductGroup> getGroup(int id) {
         return productDb.getGroup(id);
     }
 
     @Override
-    public synchronized Optional<ProductGroup> getGroup(String name) {
+    public Optional<ProductGroup> getGroup(String name) {
         return productDb.getGroup(name);
     }
 
     @Override
-    public synchronized void updateGroup(ProductGroup group) {
+    public void updateGroup(ProductGroup group) {
         checkGroupName(group.getName());
 
         if (group.getId() == null || productDb.getGroup(group.getId()).isEmpty()) {
@@ -206,23 +193,17 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public synchronized void deleteGroup(int id) {
-        ProductGroup group = getGroupOrThrow(id);
-
-        if (productDb.hasProductsInGroup(group.getId())) {
-            throw new RuntimeException("Group has products");
-        }
-
-        productDb.deleteGroup(group.getId());
+    public void deleteGroup(int id) {
+        productDb.deleteGroup(id);
     }
 
     @Override
-    public synchronized void deleteGroup(String group) {
+    public void deleteGroup(String group) {
         deleteGroup(getGroupOrThrow(group).getId());
     }
 
     @Override
-    public synchronized void addProductToGroup(int groupId, int productId) {
+    public void addProductToGroup(int groupId, int productId) {
         checkGroupExists(groupId);
         checkProductExists(productId);
 
@@ -234,28 +215,28 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public synchronized void addProductToGroup(String group, String product) {
+    public void addProductToGroup(String group, String product) {
         addProductToGroup(getGroupOrThrow(group).getId(), getProductOrThrow(product).getId());
     }
 
     @Override
-    public synchronized boolean isGroupExists(String group) {
+    public boolean isGroupExists(String group) {
         return productDb.getGroup(group).isPresent();
     }
 
     @Override
-    public synchronized boolean hasProductsInGroup(int groupId) {
+    public boolean hasProductsInGroup(int groupId) {
         checkGroupExists(groupId);
         return productDb.hasProductsInGroup(groupId);
     }
 
     @Override
-    public synchronized boolean hasProductsInGroup(String group) {
+    public boolean hasProductsInGroup(String group) {
         return hasProductsInGroup(getGroupOrThrow(group).getId());
     }
 
     @Override
-    public synchronized boolean isProductInGroup(int groupId, int productId) {
+    public boolean isProductInGroup(int groupId, int productId) {
         checkGroupExists(groupId);
         checkProductExists(productId);
 
@@ -263,7 +244,7 @@ public class StoreService implements ProductService {
     }
 
     @Override
-    public synchronized boolean isProductInGroup(String group, String product) {
+    public boolean isProductInGroup(String group, String product) {
         return isProductInGroup(getGroupOrThrow(group).getId(), getProductOrThrow(product).getId());
     }
 
