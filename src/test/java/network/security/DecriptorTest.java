@@ -1,8 +1,9 @@
+package network.security;
+
 import cipher.Decoder;
 import cipher.Encoder;
 import data.Message;
 import data.Package;
-import network.security.Decriptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import utils.MessageType;

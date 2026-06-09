@@ -1,11 +1,11 @@
 package service;
 
-import db.Filter;
-import db.Product;
-import db.ProductDatabase;
-import db.ProductGroup;
-import db.ProductPage;
-import db.ProductService;
+import db.model.Filter;
+import db.model.Product;
+import db.service.ProductDatabase;
+import db.model.ProductGroup;
+import db.model.ProductPage;
+import db.service.ProductService;
 
 import java.util.List;
 import java.util.Objects;

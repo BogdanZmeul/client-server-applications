@@ -1,6 +1,6 @@
 import cipher.Decoder;
 import cipher.Encoder;
-import db.SqliteProductService;
+import db.service.SqliteProductService;
 import network.Server;
 import network.communication.receiver.FakeNetworkReceiver;
 import network.communication.sender.FakeNetworkSender;

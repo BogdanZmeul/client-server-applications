@@ -1,4 +1,7 @@
-package db;
+package db.table;
+
+import db.model.Filter;
+import db.model.Product;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,14 +15,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class ProductTable {
+public class ProductTable {
     private final Connection connection;
 
-    ProductTable(Connection connection) {
+    public ProductTable(Connection connection) {
         this.connection = connection;
     }
 
-    int createProduct(Product product) {
+    public int createProduct(Product product) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "INSERT INTO product(name, count, price) VALUES (?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS)) {
@@ -44,7 +47,7 @@ class ProductTable {
         }
     }
 
-    int getProductsCount() {
+    public int getProductsCount() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM product")) {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -58,7 +61,7 @@ class ProductTable {
         }
     }
 
-    List<Product> getAllProducts() {
+    public List<Product> getAllProducts() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product")) {
             List<Product> products = new ArrayList<>();
 
@@ -74,7 +77,7 @@ class ProductTable {
         }
     }
 
-    List<Product> searchProducts(Filter filter) {
+    public List<Product> searchProducts(Filter filter) {
         SqlWrapper query = getSearchQuery(filter);
 
         try (PreparedStatement ps = connection.prepareStatement(query.sql.toString())) {
@@ -93,7 +96,7 @@ class ProductTable {
         }
     }
 
-    int countProducts(Filter filter) {
+    public int countProducts(Filter filter) {
         SqlWrapper query = getCountQuery(filter);
 
         try (PreparedStatement ps = connection.prepareStatement(query.sql.toString())) {
@@ -111,7 +114,7 @@ class ProductTable {
         }
     }
 
-    Optional<Product> getProduct(int id) {
+    public Optional<Product> getProduct(int id) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product WHERE id = ?")) {
             ps.setInt(1, id);
 
@@ -127,7 +130,7 @@ class ProductTable {
         }
     }
 
-    Optional<Product> getProduct(String name) {
+    public Optional<Product> getProduct(String name) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product WHERE name = ?")) {
             ps.setString(1, name);
 
@@ -143,7 +146,7 @@ class ProductTable {
         }
     }
 
-    void updateProduct(Product product) {
+    public void updateProduct(Product product) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "UPDATE product SET name = ?, count = ?, price = ? WHERE id = ?")) {
             ps.setString(1, product.getName());
@@ -160,7 +163,7 @@ class ProductTable {
         }
     }
 
-    void deleteProduct(int id) {
+    public void deleteProduct(int id) {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product WHERE id = ?")) {
             ps.setInt(1, id);
 
@@ -173,7 +176,7 @@ class ProductTable {
         }
     }
 
-    int deleteAllProducts() {
+    public int deleteAllProducts() {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM product")) {
             return ps.executeUpdate();
         } catch (SQLException e) {
@@ -181,7 +184,7 @@ class ProductTable {
         }
     }
 
-    int getProductQuantity(int productId) {
+    public int getProductQuantity(int productId) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT count FROM product WHERE id = ?")) {
             ps.setInt(1, productId);
 
@@ -197,7 +200,7 @@ class ProductTable {
         }
     }
 
-    void addProductQuantity(int productId, int count) {
+    public void addProductQuantity(int productId, int count) {
         try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET count = count + ? WHERE id = ?")) {
             ps.setInt(1, count);
             ps.setInt(2, productId);
@@ -211,7 +214,7 @@ class ProductTable {
         }
     }
 
-    void takeProductQuantity(int productId, int count) {
+    public void takeProductQuantity(int productId, int count) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "UPDATE product SET count = count - ? WHERE id = ? AND count >= ?")) {
             ps.setInt(1, count);
@@ -227,7 +230,7 @@ class ProductTable {
         }
     }
 
-    void setProductPrice(int productId, double price) {
+    public void setProductPrice(int productId, double price) {
         try (PreparedStatement ps = connection.prepareStatement("UPDATE product SET price = ? WHERE id = ?")) {
             ps.setDouble(1, price);
             ps.setInt(2, productId);
@@ -241,7 +244,7 @@ class ProductTable {
         }
     }
 
-    double getProductPrice(int productId) {
+    public double getProductPrice(int productId) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT price FROM product WHERE id = ?")) {
             ps.setInt(1, productId);
 

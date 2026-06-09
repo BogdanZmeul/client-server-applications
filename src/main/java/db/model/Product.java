@@ -1,4 +1,4 @@
-package db;
+package db.model;
 
 import java.util.Objects;
 

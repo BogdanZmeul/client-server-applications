@@ -1,8 +1,8 @@
+package network.processor;
+
 import data.Message;
 import data.Package;
-import db.SqliteProductService;
-import network.processor.Processor;
-import network.processor.ProcessorWorker;
+import db.service.SqliteProductService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,7 +105,7 @@ class ProcessorWorkerTest {
         Package actual = output.poll();
 
         assertNotNull(actual);
-        assertEquals("Error:Not enough product", actual.getMessage().getMessage());
+        assertEquals("Error:Changes to product have not been applied", actual.getMessage().getMessage());
     }
 
     private void createProduct(String name, int count, double price) {

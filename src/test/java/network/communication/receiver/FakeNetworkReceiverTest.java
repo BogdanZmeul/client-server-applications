@@ -1,3 +1,5 @@
+package network.communication.receiver;
+
 import cipher.Decoder;
 import cipher.Encoder;
 import data.Package;

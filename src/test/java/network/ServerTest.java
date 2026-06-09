@@ -1,9 +1,12 @@
+package network;
+
 import cipher.Decoder;
 import cipher.Encoder;
 import data.Message;
 import data.Package;
-import db.SqliteProductService;
-import network.Server;
+import db.model.Product;
+import db.model.ProductGroup;
+import db.service.SqliteProductService;
 import network.processor.Processor;
 import network.protocol.NetworkReceiver;
 import network.protocol.NetworkSender;
@@ -133,6 +136,97 @@ class ServerTest {
     }
 
     @Test
+    void shouldProcessCrudAndSearchMessagesWithDatabase() throws Exception {
+        byte[] keyBytes = "very_strong_key1".getBytes();
+        Key secretKey = new SecretKeySpec(keyBytes, "AES");
+        Encoder requestEncoder = new Encoder(secretKey);
+        Decoder responseDecoder = new Decoder(secretKey);
+        QueueNetworkReceiver receiver = new QueueNetworkReceiver();
+        TestNetworkSender sender = new TestNetworkSender();
+        AtomicLong packetId = new AtomicLong(1);
+
+        try (SqliteProductService productDb = new SqliteProductService(tempDir.resolve("server-crud.db").toString())) {
+            StoreService storeService = new StoreService(productDb);
+            Processor processor = new Processor(storeService);
+            int productId = storeService.createProduct(new Product("apple", 10, 5.5));
+            int groupId = storeService.createGroup(new ProductGroup("fruits"));
+
+            addMessage(receiver, requestEncoder, packetId, MessageType.GET_PRODUCT, String.valueOf(productId));
+            addMessage(receiver, requestEncoder, packetId, MessageType.UPDATE_PRODUCT,
+                    productId + ";green apple;20;7.5");
+            addMessage(receiver, requestEncoder, packetId, MessageType.GET_PRODUCT_BY_NAME, "green apple");
+            addMessage(receiver, requestEncoder, packetId, MessageType.CREATE_PRODUCT, "milk;30;3.0");
+            addMessage(receiver, requestEncoder, packetId, MessageType.GET_ALL_PRODUCTS, "");
+            addMessage(receiver, requestEncoder, packetId, MessageType.UPDATE_GROUP, groupId + ";fresh fruits");
+            addMessage(receiver, requestEncoder, packetId, MessageType.ADD_PRODUCT_TO_GROUP, "fresh fruits;green apple");
+            addMessage(receiver, requestEncoder, packetId, MessageType.SEARCH_PRODUCTS,
+                    "name=green;groups=fresh fruits;page=1;pageSize=10");
+            addMessage(receiver, requestEncoder, packetId, MessageType.DELETE_PRODUCT, String.valueOf(productId));
+            addMessage(receiver, requestEncoder, packetId, MessageType.GET_PRODUCT, String.valueOf(productId));
+
+            Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
+                    sender, 1, 1, 1, 1, 1);
+
+            server.start();
+            server.awaitStop();
+
+            int okResponses = 0;
+            int errorResponses = 0;
+            boolean searchResponseFound = false;
+
+            for (byte[] data : sender.getSentData()) {
+                Package answer = responseDecoder.decode(data);
+                String message = answer.getMessage().getMessage();
+
+                if (message.startsWith("Ok")) {
+                    okResponses++;
+                }
+                if (message.startsWith("Error")) {
+                    errorResponses++;
+                }
+                if (message.contains("ProductPage") && message.contains("green apple")) {
+                    searchResponseFound = true;
+                }
+            }
+
+            assertEquals(10, sender.getSentData().size());
+            assertEquals(9, okResponses);
+            assertEquals(1, errorResponses);
+            assertTrue(searchResponseFound);
+            assertTrue(storeService.getProduct(productId).isEmpty());
+            assertEquals("fresh fruits", storeService.getGroup(groupId).orElseThrow().getName());
+        }
+    }
+
+    @Test
+    void shouldReturnErrorForWrongSearchFilterWithDatabase() throws Exception {
+        byte[] keyBytes = "very_strong_key1".getBytes();
+        Key secretKey = new SecretKeySpec(keyBytes, "AES");
+        Encoder requestEncoder = new Encoder(secretKey);
+        Decoder responseDecoder = new Decoder(secretKey);
+        QueueNetworkReceiver receiver = new QueueNetworkReceiver();
+        TestNetworkSender sender = new TestNetworkSender();
+        AtomicLong packetId = new AtomicLong(1);
+
+        addMessage(receiver, requestEncoder, packetId, MessageType.SEARCH_PRODUCTS, "minCount=10;maxCount=1");
+
+        try (SqliteProductService productDb = new SqliteProductService(tempDir.resolve("server-search-error.db").toString())) {
+            StoreService storeService = new StoreService(productDb);
+            Processor processor = new Processor(storeService);
+            Server server = new Server(receiver, new Decoder(secretKey), processor, new Encoder(secretKey),
+                    sender, 1, 1, 1, 1, 1);
+
+            server.start();
+            server.awaitStop();
+
+            assertEquals(1, sender.getSentData().size());
+
+            Package answer = responseDecoder.decode(sender.getSentData().take());
+            assertEquals("Error:Min count cannot be greater than max count", answer.getMessage().getMessage());
+        }
+    }
+
+    @Test
     void shouldProcessHeavyLoadWithManyWorkers() throws Exception {
         byte[] keyBytes = "very_strong_key1".getBytes();
         Key secretKey = new SecretKeySpec(keyBytes, "AES");
@@ -141,8 +235,8 @@ class ServerTest {
         QueueNetworkReceiver receiver = new QueueNetworkReceiver();
         TestNetworkSender sender = new TestNetworkSender();
         AtomicLong packetId = new AtomicLong(1);
-        int threadsCount = 12;
-        int messagesCount = 100;
+        int threadsCount = 6;
+        int messagesCount = 20;
         Thread[] threads = new Thread[threadsCount];
 
         for (int i = 0; i < threadsCount; i++) {

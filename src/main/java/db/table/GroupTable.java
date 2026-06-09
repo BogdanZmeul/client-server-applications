@@ -1,4 +1,6 @@
-package db;
+package db.table;
+
+import db.model.ProductGroup;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,14 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-class GroupTable {
+public class GroupTable {
     private final Connection connection;
 
-    GroupTable(Connection connection) {
+    public GroupTable(Connection connection) {
         this.connection = connection;
     }
 
-    int createGroup(ProductGroup group) {
+    public int createGroup(ProductGroup group) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "INSERT INTO product_group(name) VALUES (?)",
                 Statement.RETURN_GENERATED_KEYS)) {
@@ -39,7 +41,7 @@ class GroupTable {
         }
     }
 
-    int getGroupsCount() {
+    public int getGroupsCount() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM product_group")) {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -53,7 +55,7 @@ class GroupTable {
         }
     }
 
-    List<ProductGroup> getAllGroups() {
+    public List<ProductGroup> getAllGroups() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product_group")) {
             List<ProductGroup> groups = new ArrayList<>();
 
@@ -69,7 +71,7 @@ class GroupTable {
         }
     }
 
-    Optional<ProductGroup> getGroup(int id) {
+    public Optional<ProductGroup> getGroup(int id) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product_group WHERE id = ?")) {
             ps.setInt(1, id);
 
@@ -85,7 +87,7 @@ class GroupTable {
         }
     }
 
-    Optional<ProductGroup> getGroup(String name) {
+    public Optional<ProductGroup> getGroup(String name) {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product_group WHERE name = ?")) {
             ps.setString(1, name);
 
@@ -101,7 +103,7 @@ class GroupTable {
         }
     }
 
-    void updateGroup(ProductGroup group) {
+    public void updateGroup(ProductGroup group) {
         try (PreparedStatement ps = connection.prepareStatement("UPDATE product_group SET name = ? WHERE id = ?")) {
             ps.setString(1, group.getName());
             ps.setInt(2, group.getId());
@@ -115,7 +117,7 @@ class GroupTable {
         }
     }
 
-    void deleteGroup(int id) {
+    public void deleteGroup(int id) {
         try (PreparedStatement ps = connection.prepareStatement("""
                 DELETE FROM product_group
                 WHERE id = ? AND NOT EXISTS (
@@ -136,7 +138,7 @@ class GroupTable {
         }
     }
 
-    void addProductToGroup(int groupId, int productId) {
+    public void addProductToGroup(int groupId, int productId) {
         try (PreparedStatement ps = connection.prepareStatement(
                 "UPDATE product SET group_id = ? WHERE id = ? AND EXISTS (SELECT 1 FROM product_group WHERE id = ?)")) {
             ps.setInt(1, groupId);
@@ -152,7 +154,7 @@ class GroupTable {
         }
     }
 
-    boolean hasProductsInGroup(int groupId) {
+    public boolean hasProductsInGroup(int groupId) {
         try (PreparedStatement ps = connection.prepareStatement("""
                 SELECT COUNT(*)
                 FROM product
@@ -172,7 +174,7 @@ class GroupTable {
         }
     }
 
-    boolean isProductInGroup(int groupId, int productId) {
+    public boolean isProductInGroup(int groupId, int productId) {
         try (PreparedStatement ps = connection.prepareStatement("""
                 SELECT COUNT(*)
                 FROM product

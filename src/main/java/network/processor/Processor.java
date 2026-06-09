@@ -2,10 +2,10 @@ package network.processor;
 
 import data.Message;
 import data.Package;
-import db.Filter;
-import db.Product;
-import db.ProductGroup;
-import db.ProductService;
+import db.model.Filter;
+import db.model.Product;
+import db.model.ProductGroup;
+import db.service.ProductService;
 import utils.MessageType;
 
 import java.util.Arrays;

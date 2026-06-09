@@ -1,4 +1,5 @@
-import cipher.Decoder;
+package cipher;
+
 import data.Package;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
